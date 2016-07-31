@@ -6,6 +6,13 @@ char_height = 20
 space = 20
 
 class Box:
+    """
+    A Box displays a state.
+
+    :param yaml_dict: This is the data structure (Dict) obtained from a yaml statechart
+    :param horizontal_axis: The inner states will be arranged on a horizontal axis if this parameter is True, on a vertical axis otherwise.
+    :param parallel_state: True if the state is parralel to another
+    """
 
 
     def __init__(self, yaml_dict, horizontal_axis=False, parallel_state=False):
@@ -34,6 +41,12 @@ class Box:
 
 
     def render(self, dwg, insert=(0,0)):
+        """
+        Computes the positions of the inner Boxes and their names and puts it in the Drawing object.
+
+        :param dwg: Drawing object obtained from svgwrite
+        :param insert: upper left corner position of the box
+        """
         normal_style = "font-size:20;font-family:Arial"
         italic_style = "font-size:20;font-family:Arial;font-style:oblique"
         x, y = insert
@@ -70,11 +83,15 @@ class Box:
 
 
     def export(self):
+        """
+        Creates the svg file that represents the Box.
+        """
         dwg = svgwrite.Drawing(self.name + ".svg")
         self.render(dwg)
         dwg.save()
 
 
+#test
 with open("tests/elevator.yaml", 'r') as stream:
     try:
         b = Box(yaml.load(stream)['statechart'])
