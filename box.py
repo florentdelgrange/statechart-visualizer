@@ -8,7 +8,7 @@ space = 20
 class Box:
 
 
-    def __init__(self, yaml_dict, horizontal_axis=True, parallel_state=False):
+    def __init__(self, yaml_dict, horizontal_axis=False, parallel_state=False):
         self.name = yaml_dict['name']
         self.children = []
         self.horizontal_axis = horizontal_axis
@@ -27,7 +27,7 @@ class Box:
             p_len = 0
         if horizontal_axis:
             self.width = max(sum(map(lambda x: x.width + space, self.children)) + space, space + p_len + char_width * len(self.name) + space)
-            self.height = max(list(map(lambda x: x.height, self.children)) or [0]) + 2 * space + 2 * space + char_height
+            self.height = max(list(map(lambda x: x.height, self.children)) or [0]) + 4 * space + char_height
         else:
             self.width = max(max(list(map(lambda x: x.width, self.children)) or [0]) + 2 * space, space + p_len + char_width * len(self.name) + space)
             self.height = sum(map(lambda x: x.height + space, self.children)) + space + 2 * space + char_height
@@ -62,7 +62,7 @@ class Box:
                 w += child.width
         else:
             w = x + self.width/2
-            h = y
+            h = y + space + char_height
             for child in self.children:
                 h += space
                 child.render(dwg, insert=(w - child.width/2, h))
