@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import svgwrite, yaml
 
-char_width = 15
+char_width = 14
 char_height = 20
 space = 20
 
@@ -15,7 +15,7 @@ class Box:
     """
 
 
-    def __init__(self, yaml_dict, horizontal_axis=False, parallel_state=False, preamble=''):
+    def __init__(self, yaml_dict, horizontal_axis=True, parallel_state=False, preamble=''):
         self.name = yaml_dict['name']
         self.children = []
         self.horizontal_axis = horizontal_axis
@@ -27,14 +27,12 @@ class Box:
             self.header += space + char_height
 
         if 'root state' in yaml_dict:
-            if 'preamble' in yaml_dict:
-                self.children += [Box(yaml_dict['root state'], not(horizontal_axis), preamble="entry / " + yaml_dict['preamble'].replace("\n", " ; "))]
-            else:
-                self.children += [Box(yaml_dict['root state'], not(horizontal_axis))]
+            self.children += [Box(yaml_dict['root state'], not(horizontal_axis), preamble=yaml_dict.get('preamble', '').replace("\n", " ; "))]
+            self.root = self.children[0]
         if 'parallel states' in yaml_dict:
-            self.children += [Box(x, not(horizontal_axis), parallel_state=True) for x in yaml_dict['parallel states']]
+            self.children += [Box(x, not(horizontal_axis), parallel_state=True, preamble=x.get('on entry', '')) for x in yaml_dict['parallel states']]
         if 'states' in yaml_dict:
-            self.children += [Box(x, not(horizontal_axis)) for x in yaml_dict['states']]
+            self.children += [Box(x, not(horizontal_axis), preamble=x.get('on entry', '')) for x in yaml_dict['states']]
 
         self.width, self.height = self.compute_dimensions()
 
@@ -70,7 +68,8 @@ class Box:
         if self.preamble != '':
             w = x + space
             h += space + char_height
-            dwg.add(dwg.text(self.preamble, insert=(w, h), style=italic_style, textLength=min(len(self.preamble) * char_width, self.width - 2 * space)))
+            dwg.add(dwg.text("entry / ", insert=(w, h), style=italic_style, textLength=8*char_width))
+            dwg.add(dwg.text(self.preamble, insert=(w + 8 * char_width, h), style=normal_style, textLength=len(self.preamble)*char_width))
 
         # Finnaly draw the children following the axis (horizontal or vertical)
         if self.horizontal_axis:
@@ -107,11 +106,15 @@ class Box:
             p_len = 14 * char_width
         else:
             p_len = 0
+        if self.preamble != '':
+            entry_len = (8 + len(self.preamble)) * char_width
+        else:
+            entry_len = 0
         if self.horizontal_axis:
-            width = max(sum(map(lambda x: x.width + space, self.children)) + space, space + p_len + char_width * len(self.name) + space)
+            width = max(sum(map(lambda x: x.width + space, self.children)) + space, space + p_len + char_width * len(self.name) + space, 2 * space + entry_len)
             height = max(list(map(lambda x: x.height, self.children)) or [0]) + self.header + space
         else:
-            width = max(max(list(map(lambda x: x.width, self.children)) or [0]) + 2 * space, space + p_len + char_width * len(self.name) + space)
+            width = max(max(list(map(lambda x: x.width, self.children)) or [0]) + 2 * space, space + p_len + char_width * len(self.name) + space, 2 * space + entry_len)
             height = sum(map(lambda x: x.height + space, self.children)) + self.header
         return width, height
 
