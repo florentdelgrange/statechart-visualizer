@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import svgwrite, yaml
 
-char_width = 14
+char_width = 10
 char_height = 20
 space = 20
 
@@ -30,7 +30,17 @@ class Box:
             self.children += [Box(yaml_dict['root state'], not(horizontal_axis), preamble=yaml_dict.get('preamble', '').replace("\n", " ; "))]
             self.root = self.children[0]
         if 'parallel states' in yaml_dict:
-            self.children += [Box(x, not(horizontal_axis), parallel_state=True, preamble=x.get('on entry', '')) for x in yaml_dict['parallel states']]
+            brothers = []
+            brothers += [Box(x, not(horizontal_axis), parallel_state=True, preamble=x.get('on entry', '')) for x in yaml_dict['parallel states']]
+            self.children += brothers
+            if horizontal_axis:
+                height = max(map(lambda x: x.height, brothers))
+                for x in brothers:
+                    x.height = height
+            else:
+                width = max(map(lambda x: x.width, brothers))
+                for x in brothers:
+                    x.width = width
         if 'states' in yaml_dict:
             self.children += [Box(x, not(horizontal_axis), preamble=x.get('on entry', '')) for x in yaml_dict['states']]
 
@@ -65,11 +75,12 @@ class Box:
             w = w - (len(self.name) * char_width) / 2
             dwg.add(dwg.text(self.name, insert=(w, h), style=bold_style, textLength=len(self.name) * char_width))
 
+        # This draws the 'on entry' zone
         if self.preamble != '':
             w = x + space
             h += space + char_height
             dwg.add(dwg.text("entry / ", insert=(w, h), style=italic_style, textLength=8*char_width))
-            dwg.add(dwg.text(self.preamble, insert=(w + 8 * char_width, h), style=normal_style, textLength=len(self.preamble)*char_width))
+            dwg.add(dwg.text(self.preamble, insert=(w + 9 * char_width, h), style=normal_style, textLength=len(self.preamble)*char_width))
 
         # Finnaly draw the children following the axis (horizontal or vertical)
         if self.horizontal_axis:
@@ -92,7 +103,7 @@ class Box:
         """
         Creates the svg file that represents the Box.
         """
-        dwg = svgwrite.Drawing(self.name + ".svg")
+        dwg = svgwrite.Drawing(self.name + ".svg", size=(self.width, self.height))
         self.render(dwg)
         dwg.save()
 
