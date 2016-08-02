@@ -16,7 +16,7 @@ class Box:
     """
 
 
-    def __init__(self, yaml_dict, horizontal_axis=False, parallel_state=False, preamble=''):
+    def __init__(self, yaml_dict, horizontal_axis=True, parallel_state=False, preamble=''):
         self.name = yaml_dict['name']
         self.children = []
         self.horizontal_axis = horizontal_axis
@@ -68,28 +68,30 @@ class Box:
         bold_style = "font-size:25;font-weight:bold;font-family:Arial"
         x, y = insert
         # First draw the main box
-        rect = dwg.rect(insert=(x, y), size=(self.width, self.height), fill=svgwrite.rgb(135,206,235), stroke='black', stroke_width=1)
-        dwg.add(rect)
+        g = svgwrite.container.Group()
+        dwg.add(g)
+        rect = svgwrite.shapes.Rect(insert=(x, y), size=(self.width, self.height), fill=svgwrite.rgb(135,206,235), stroke='black', stroke_width=1)
+        g.add(rect)
 
         # Now draw the name of the box
         w = x + self.width / 2
         h = y + space + char_height
         if self.parallel_state:
             w = w - (len(self.name) * char_width + 13 * char_width) / 2
-            t1 = dwg.text("<<parallel>>", insert=(w, h), style=italic_style, textLength=13*char_width)
-            t2 = dwg.text(self.name, insert=(w + 14 * char_width, h), style=bold_style, textLength=len(self.name)*char_width)
-            dwg.add(t1)
-            dwg.add(t2)
+            t1 = svgwrite.text.Text("<<parallel>>", insert=(w, h), style=italic_style, textLength=13*char_width)
+            t2 = svgwrite.text.Text(self.name, insert=(w + 14 * char_width, h), style=bold_style, textLength=len(self.name)*char_width)
+            g.add(t1)
+            g.add(t2)
         else:
             w = w - (len(self.name) * char_width) / 2
-            dwg.add(dwg.text(self.name, insert=(w, h), style=bold_style, textLength=len(self.name) * char_width))
+            g.add(svgwrite.text.Text(self.name, insert=(w, h), style=bold_style, textLength=len(self.name) * char_width))
 
         # This draws the 'on entry' zone
         if self.preamble != '':
             w = x + space
             h += space + char_height
-            dwg.add(dwg.text("entry / ", insert=(w, h), style=italic_style, textLength=8*char_width))
-            dwg.add(dwg.text(self.preamble, insert=(w + 9 * char_width, h), style=normal_style, textLength=len(self.preamble)*char_width))
+            g.add(svgwrite.text.Text("entry / ", insert=(w, h), style=italic_style, textLength=8*char_width))
+            g.add(svgwrite.text.Text(self.preamble, insert=(w + 9 * char_width, h), style=normal_style, textLength=len(self.preamble)*char_width))
 
         # Finnaly draw the children following the axis (horizontal or vertical)
         if self.horizontal_axis:
@@ -97,15 +99,15 @@ class Box:
             h = y + (self.height + self.header) / 2
             for child in self.children:
                 w += space
-                child.render(dwg, insert=(w, h - child.height/2))
+                child.render(g, insert=(w, h - child.height/2))
                 w += child.width
         else:
             w = x + self.width/2
             h = y + self.header - space
             for child in self.children:
                 h += space
-                child.render(dwg, insert=(w - child.width/2, h))
-                h += child.height 
+                child.render(g, insert=(w - child.width/2, h))
+                h += child.height
 
 
     def export(self):
@@ -159,4 +161,4 @@ class RootBox(Box):
 
     def render(self, dwg, insert=(0,0)):
         x, y = insert
-        dwg.add(dwg.circle(center=(x+radius,y+radius), r=radius))
+        dwg.add(svgwrite.shapes.Circle(center=(x+radius,y+radius), r=radius))
