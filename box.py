@@ -56,20 +56,20 @@ class Box:
         self.width, self.height = self.compute_dimensions()
 
 
-    def render(self, dwg, insert=(0,0)):
+    def render(self, insert=(0,0)):
         """
         Computes the positions of the inner Boxes and their names and puts it in the Drawing object.
 
-        :param dwg: Drawing object obtained from svgwrite
         :param insert: upper left corner position of the box
+        :return: the box as a group of svg shapes
         """
         normal_style = "font-size:25;font-family:Arial"
         italic_style = "font-size:25;font-family:Arial;font-style:oblique"
         bold_style = "font-size:25;font-weight:bold;font-family:Arial"
         x, y = insert
-        # First draw the main box
         g = svgwrite.container.Group()
-        dwg.add(g)
+
+        # First draw the main box
         rect = svgwrite.shapes.Rect(insert=(x, y), size=(self.width, self.height), fill=svgwrite.rgb(135,206,235), stroke='black', stroke_width=1)
         g.add(rect)
 
@@ -99,15 +99,17 @@ class Box:
             h = y + (self.height + self.header) / 2
             for child in self.children:
                 w += space
-                child.render(g, insert=(w, h - child.height/2))
+                g.add(child.render(insert=(w, h - child.height/2)))
                 w += child.width
         else:
             w = x + self.width/2
             h = y + self.header - space
             for child in self.children:
                 h += space
-                child.render(g, insert=(w - child.width/2, h))
+                g.add(child.render(insert=(w - child.width/2, h)))
                 h += child.height
+
+        return g
 
 
     def export(self):
@@ -115,7 +117,7 @@ class Box:
         Creates the svg file that represents the Box.
         """
         dwg = svgwrite.Drawing(self.name + ".svg", size=(self.width, self.height))
-        self.render(dwg)
+        dwg.add(self.render())
         dwg.save()
 
 
@@ -159,6 +161,6 @@ class RootBox(Box):
         return radius*2, radius*2
 
 
-    def render(self, dwg, insert=(0,0)):
+    def render(self, insert=(0,0)):
         x, y = insert
-        dwg.add(svgwrite.shapes.Circle(center=(x+radius,y+radius), r=radius))
+        return svgwrite.shapes.Circle(center=(x+radius,y+radius), r=radius)
