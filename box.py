@@ -4,6 +4,7 @@ import svgwrite, yaml
 char_width = 10
 char_height = 20
 space = 20
+radius = space
 
 class Box:
     """
@@ -15,23 +16,25 @@ class Box:
     """
 
 
-    def __init__(self, yaml_dict, horizontal_axis=True, parallel_state=False, preamble=''):
+    def __init__(self, yaml_dict, horizontal_axis=False, parallel_state=False, preamble=''):
         self.name = yaml_dict['name']
         self.children = []
         self.horizontal_axis = horizontal_axis
         self.parallel_state = parallel_state
-        self.root = None
+        self.transitions = []
         self.preamble = preamble
         self.header = 2 * space + char_height
         if self.preamble:
             self.header += space + char_height
 
         if 'root state' in yaml_dict:
-            self.children += [Box(yaml_dict['root state'], not(horizontal_axis), preamble=yaml_dict.get('preamble', '').replace("\n", " ; "))]
-            self.root = self.children[0]
+            child = Box(yaml_dict['root state'], not(horizontal_axis), preamble=yaml_dict.get('preamble', '').replace("\n", " ; "))
+            self.children += [RootBox(child.name), child]
+
         if 'parallel states' in yaml_dict:
+            states_dict = yaml_dict['parallel states']
             brothers = []
-            brothers += [Box(x, not(horizontal_axis), parallel_state=True, preamble=x.get('on entry', '')) for x in yaml_dict['parallel states']]
+            brothers += [Box(x, not(horizontal_axis), parallel_state=True, preamble=x.get('on entry', '')) for x in states_dict]
             self.children += brothers
             if horizontal_axis:
                 height = max(map(lambda x: x.height, brothers))
@@ -41,8 +44,14 @@ class Box:
                 width = max(map(lambda x: x.width, brothers))
                 for x in brothers:
                     x.width = width
+
         if 'states' in yaml_dict:
             self.children += [Box(x, not(horizontal_axis), preamble=x.get('on entry', '')) for x in yaml_dict['states']]
+
+        if self.parallel_state:
+            # we consider that a parallel state always have a initial state
+            init = next(x for x in self.children if x.name==yaml_dict['initial'])
+            self.children = [RootBox(init.name), init] + list(filter(lambda x: x is not init, self.children))
 
         self.width, self.height = self.compute_dimensions()
 
@@ -130,11 +139,24 @@ class Box:
         return width, height
 
 
+class RootBox(Box):
 
-#test
-with open("tests/elevator.yaml", 'r') as stream:
-    try:
-        b = Box(yaml.load(stream)['statechart'])
-        b.export()
-    except yaml.YAMLError as exc:
-        print(exc)
+
+    def __init__(self, root_state):
+        self.name = ''
+        self.children = []
+        self.horizontal_axis = False
+        self.parallel_state = False
+        self.transitions = [{'target': root_state, 'guard': ''}]
+        self.preamble = ''
+        self.header = 0
+        self.width, self.height = self.compute_dimensions()
+
+
+    def compute_dimensions(self):
+        return radius*2, radius*2
+
+
+    def render(self, dwg, insert=(0,0)):
+        x, y = insert
+        dwg.add(dwg.circle(center=(x+radius,y+radius), r=radius))
