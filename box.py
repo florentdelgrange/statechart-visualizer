@@ -54,6 +54,7 @@ class Box:
             self.children = [RootBox(init.name), init] + list(filter(lambda x: x is not init, self.children))
 
         self.width, self.height = self.compute_dimensions()
+        self.coordinates = (0, 0, self.width, self.height) # render() will update the children coordinates
 
 
     def render(self, insert=(0,0)):
@@ -67,6 +68,8 @@ class Box:
         italic_style = "font-size:25;font-family:Arial;font-style:oblique"
         bold_style = "font-size:25;font-weight:bold;font-family:Arial"
         x, y = insert
+        # update the coordinates following the insert position /!\ side effect
+        self.coordinates = (x, y, x+self.width, y+self.height)
         g = svgwrite.container.Group()
 
         # First draw the main box
@@ -143,6 +146,23 @@ class Box:
         return width, height
 
 
+    def find(self, state_name):
+        """
+        Find a Box with the name in parameter in this Box and return it.
+
+        :param state_name: the name of the wanted state Box.
+        :return: The Box with this name.
+        """
+        if self.name == state_name:
+            return self
+        else:
+            for child in self.children:
+                x = child.find(state_name)
+                if x != None:
+                    return x
+            return None
+
+
 class RootBox(Box):
 
 
@@ -155,6 +175,7 @@ class RootBox(Box):
         self.preamble = ''
         self.header = 0
         self.width, self.height = self.compute_dimensions()
+        self.coordinates = (0, 0, self.height, self.width)
 
 
     def compute_dimensions(self):
