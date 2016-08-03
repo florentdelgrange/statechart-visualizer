@@ -21,7 +21,7 @@ class Box:
         self.children = []
         self.horizontal_axis = horizontal_axis
         self.parallel_state = parallel_state
-        self.transitions = []
+        self.transitions = yaml_dict.get('transitions', [])
         self.preamble = preamble
         self.header = 2 * space + char_height
         if self.preamble:
@@ -121,6 +121,7 @@ class Box:
         """
         dwg = svgwrite.Drawing(self.name + ".svg", size=(self.width, self.height))
         dwg.add(self.render())
+        self.draw_transitions(dwg, self)
         dwg.save()
 
 
@@ -146,9 +147,64 @@ class Box:
         return width, height
 
 
+    def draw_transitions(self, dwg, main_box):
+        def acceptance_zone(x1, x2, x3, x4):
+            if x1 < x2 and x3 < x4:
+                x = [x1, x2, x3, x4]
+                x.remove(min(x))
+                x.remove(max(x))
+                a, b = min(x), max(x)
+                if (a >= x1 and b <= x2) and (a >= x3 and b <= x4):
+                    return a, b
+
+        def zone(box1, box2):
+            """box2 is ___ of the box1"""
+            x1, y1, x2, y2 = box1.coordinates
+            x3, y3, x4, y4 = box2.coordinates
+            x1, y1 = ((x1 + x2) / 2, (y1 + y2) / 2)
+            x2, y2 = ((x3 + x4) / 2, (y3 + y4) / 2)
+            if x1 <= x2 and y1 >= y2:
+                return 'northeast'
+            elif x1 >= x2 and y1 >= y2:
+                return 'northwest'
+            elif x1 >= x2 and y1 <= y2:
+                return 'southwest'
+            else:
+                return 'southeast'
+
+        for t in self.transitions:
+            targeted_box = main_box.find(t['target'])
+            if targeted_box != self:
+                x1, y1, x2, y2 = self.coordinates
+                x3, y3, x4, y4 = targeted_box.coordinates
+                direction = zone(self, targeted_box)
+                acc = acceptance_zone(y1, y2, y3, y4)
+                # horizontal test
+                if acc is not None:
+                    y = (acc[0] + acc[1])/2
+                    #draw the arrow
+                    if direction=='southwest' or direction=='northwest':
+                        dwg.add(dwg.line(start=(x1, y), end=(x4, y), stroke='black', stroke_width=1))
+                    else:
+                        dwg.add(dwg.line(start=(x2, y), end=(x3, y), stroke='black', stroke_width=1))
+                # vertical test
+                else:
+                    acc = acceptance_zone(x1, x2, x3, x4)
+                    if acc is not None:
+                        print(self.name, targeted_box.name)
+                        x = (acc[0] + acc[1])/2
+                        #draw the arrow
+                        if direction=='northeast' or direction=='northwest':
+                            dwg.add(dwg.line(start=(x, y1), end=(x, y4), stroke='black', stroke_width=1))
+                        else:
+                            dwg.add(dwg.line(start=(x, y2), end=(x, y3), stroke='black', stroke_width=1))
+        for child in self.children:
+            child.draw_transitions(dwg, self)
+
+
     def find(self, state_name):
         """
-        Find a Box with the name in parameter in this Box and return it.
+        Finds a Box with the name in parameter in this Box and returns it.
 
         :param state_name: the name of the wanted state Box.
         :return: The Box with this name.
@@ -185,3 +241,6 @@ class RootBox(Box):
     def render(self, insert=(0,0)):
         x, y = insert
         return svgwrite.shapes.Circle(center=(x+radius,y+radius), r=radius)
+
+    def draw_transitions(self, dwg, main_box):
+        super().draw_transitions(dwg, main_box)
