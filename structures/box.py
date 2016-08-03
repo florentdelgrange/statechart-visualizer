@@ -25,6 +25,7 @@ class Box:
         self._root_state = None # type : Box ; Initial inner state in this Box
         self._width, self._height = 0, 0
         self._x, self._y = 0, 0
+        self._shape = 'rectangle'
 
 
     def update(new_children: List[Box]=None, new_transitions: List[Transition]=None, entry: str=None, root_state: Box=None, insert=None, axis='', parallel_states=None):
@@ -49,28 +50,30 @@ class Box:
         if axis == 'vertical' or axis == 'horizontal': self._axis = axis
         if parallel_states != None: self._parallel_states = parallel_states
 
-        def compute_dimensions():
-            """
-            Compute the dimensions of the box.
-            :return: the width and the height of the box.
-            """
-            if self._parallel_state != []:
-                p_len = 14 * char_width
-            else:
-                p_len = 0
-            if self.entry != '':
-                entry_len = (8 + len(self._entry)) * char_width
-            else:
-                entry_len = 0
-            if axis == 'horizontal':
-                width = max(sum(map(lambda x: x.width + space, self.children)) + space, space + p_len + char_width * len(self.name) + space, 2 * space + entry_len)
-                height = max(list(map(lambda x: x.height, self.children)) or [0]) + self.header + space
-            else:
-                width = max(max(list(map(lambda x: x.width, self.children)) or [0]) + 2 * space, space + p_len + char_width * len(self.name) + space, 2 * space + entry_len)
-                height = sum(map(lambda x: x.height + space, self.children)) + self.header
-            return width, height
-
         self._width, self._height = compute_dimensions()
+
+
+    def compute_dimensions(self):
+        """
+        Compute the dimensions of the box.
+
+        :return: the width and the height of the box.
+        """
+        if self._parallel_state != []:
+            p_len = 14 * char_width
+        else:
+            p_len = 0
+        if self.entry != '':
+            entry_len = (8 + len(self._entry)) * char_width
+        else:
+            entry_len = 0
+        if axis == 'horizontal':
+            width = max(sum(map(lambda x: x.width + space, self.children)) + space, space + p_len + char_width * len(self.name) + space, 2 * space + entry_len)
+            height = max(list(map(lambda x: x.height, self.children)) or [0]) + self.header + space
+        else:
+            width = max(max(list(map(lambda x: x.width, self.children)) or [0]) + 2 * space, space + p_len + char_width * len(self.name) + space, 2 * space + entry_len)
+            height = sum(map(lambda x: x.height + space, self.children)) + self.header
+        return width, height
 
 
     @property
@@ -122,4 +125,33 @@ class Box:
 
     @property
     def coordinates(self):
+        """
+        The coordinates of the Box with (insert=(x1, y1), end=(x2, y2))
+        """
         return (self._x1, self._y1), (self._x1 + width, self._y2 + height)
+
+
+    @property
+    def shape(self):
+        return self._shape
+
+
+
+class RootBox(Box):
+
+
+    def __init__(self, root_state):
+        self._name = ''
+        self._axis = None
+        self._parallel_state = []
+        self._children = []
+        self._transitions = [Transition(root_state)]
+        self._entry = ''
+        self._exit = ''
+        self._width, self._height = self.compute_dimensions()
+        self._x, self._y = 0, 0
+        self._shape = 'circle'
+
+
+    def compute_dimensions(self):
+        return radius*2, radius*2
