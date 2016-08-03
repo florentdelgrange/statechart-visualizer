@@ -1,9 +1,7 @@
-from box import Box
-
 class Transition:
 
 
-    def __init__(self, target: Box, guard: str='', event: str='', action: str=''):
+    def __init__(self, target, guard: str='', event: str='', action: str=''):
         self.target = target
         self.guard = guard
         self.event = event
