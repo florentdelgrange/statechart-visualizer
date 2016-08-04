@@ -1,20 +1,42 @@
 import svgwrite
-from structures.box import Box, space, char_width, char_height
+from structures.box import Box, radius, char_width
 
 normal_style = "font-size:25;font-family:Arial"
 italic_style = "font-size:25;font-family:Arial;font-style:oblique"
 bold_style = "font-size:25;font-weight:bold;font-family:Arial"
 
 
-def render(box: Box):
+def get_shape(box: Box):
+    """
+    get the svg object associated with the shape of the Box
+
+    :param box: the box to render
+    :return: the svg object related
+    """
     x, y = box.coordinates
+    if box.shape == 'rectangle':
+        return svgwrite.shapes.Rect(insert=(x, y), size=(box.width, box.height),
+                                    fill=svgwrite.rgb(135, 206, 235),
+                                    stroke='black', stroke_width=1)
+    elif box.shape == 'circle':
+        return svgwrite.shapes.Circle(center=(x+radius, y+radius), r=radius)
+    else:
+        return svgwrite.shapes.Rect(insert=(x, y), size=(box.width, box.height),
+                                    fill="#044B94", fill_opacity="0.4")
+
+
+def render(box: Box):
+    """
+    creates the shapes of the boxes and puts it in a svg group
+
+    :param box: the box to render
+    :return: the group that contains the box and their inner boxes
+    """
     g = svgwrite.container.Group()
 
     # First draw the main box
-    rect = svgwrite.shapes.Rect(insert=(x, y), size=(box.width, box.height),
-                                fill=svgwrite.rgb(135, 206, 235),
-                                stroke='black', stroke_width=1)
-    g.add(rect)
+    shape = get_shape(box)
+    g.add(shape)
 
     # Now draw the name of the box
     w, h = box.get_text_position_of('name')
