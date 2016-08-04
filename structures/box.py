@@ -1,6 +1,5 @@
-from sismic.model import Statechart
 from sismic.model.elements import CompoundState, OrthogonalState
-from transition import Transition
+from structures.transition import Transition
 
 char_width, char_height, space, radius = 10, 20, 20, 20
 
@@ -13,23 +12,25 @@ class Box:
     :param axis: 'vertical' | 'horizontal': the inner boxes will be positioned on this axis
     """
 
-
-    def __init__(self, name: str, axis: str='horizontal'):
+    def __init__(self, name: str, axis: str = 'horizontal'):
         self._name = name
         self._axis = axis
-        self._parallel_states = [] #type: List[Box]
-        self._children = [] #type: List[Box]
-        self._transitions = [] #type: List[Transition]
-        self._entry = '' #type: str
-        self._exit = '' #type: str
-        self._root_state = None #type: Box ; Initial inner state in this Box
-        self._parent = None #type: Box
+        self._parallel_states = []  # type: List[Box]
+        self._children = []  # type: List[Box]
+        self._transitions = []  # type: List[Transition]
+        self._entry = ''  # type: str
+        self._exit = ''  # type: str
+        self._root_state = None  # type: Box ; Initial inner state in this Box
+        self._parent = None  # type: Box
+        self._text_coordinates = {}  # type Dict[str: (int, int)]
         self._width, self._height = 0, 0
         self._x, self._y = 0, 0
         self._shape = 'rectangle'
 
-
-    def update(new_children: List[Box]=None, new_transitions: List[Transition]=None, entry: str=None, exit: str=None root_state: Box=None, axis='', parallel_states=None):
+    def update(self, new_children: object = None, new_transitions: object = None, entry: str = None,
+               exit: str = None,
+               root_state: object = None,
+               axis: str = '', parallel_states: object = None) -> None:
         """
         Update the dimensions of the box. Some optional parameters can be added
         so that they are updated at the same time.
@@ -43,18 +44,18 @@ class Box:
         :param axis: the axis of the box; must be vertical or horizontal
         :param parallel_states: the list of parralel Boxes
         """
-        if children != None:
+        if new_children is not None:
             self._children += new_children
             for child in new_children:
                 child._parent = self
-        if transitions != None: self._transitions += new_transitions
-        if entry != None: self._entry = entry
-        if exit != None: self._exit = exit
-        if root_state != None: self._root_state = root_state
+        if new_transitions is not None: self._transitions += new_transitions
+        if entry is not None: self._entry = entry
+        if exit is not None: self._exit = exit
+        if root_state is not None: self._root_state = root_state
         if axis == 'vertical' or axis == 'horizontal': self._axis = axis
-        if parallel_states != None: self._parallel_states = parallel_states
+        if parallel_states is not None: self._parallel_states = parallel_states
 
-        self._width, self._height = compute_dimensions()
+        self._width, self._height = self.compute_dimensions()
 
         if self.orthogonal_state:
             if self._axis == 'horizontal':
@@ -66,14 +67,13 @@ class Box:
                 for brother in self.children:
                     brother._width = width
 
-
     def compute_dimensions(self):
         """
         Compute the dimensions of the box.
 
         :return: the width and the height of the box.
         """
-        if self._parallel_states != []:
+        if self._parallel_states:
             p_len = 14 * char_width
         else:
             p_len = 0
@@ -81,19 +81,20 @@ class Box:
             entry_len = (8 + len(self._entry)) * char_width
         else:
             entry_len = 0
-        if axis == 'horizontal':
-            width = max(sum(map(lambda x: x.width + space, self.children)) + space, space + p_len + char_width * len(self.name) + space, 2 * space + entry_len)
+        if self._axis == 'horizontal':
+            width = max(sum(map(lambda x: x.width + space, self.children)) + space,
+                        space + p_len + char_width * len(self.name) + space, 2 * space + entry_len)
             height = max(list(map(lambda x: x.height, self.children)) or [0]) + self.header + space
         else:
-            width = max(max(list(map(lambda x: x.width, self.children)) or [0]) + 2 * space, space + p_len + char_width * len(self.name) + space, 2 * space + entry_len)
+            width = max(max(list(map(lambda x: x.width, self.children)) or [0]) + 2 * space,
+                        space + p_len + char_width * len(self.name) + space, 2 * space + entry_len)
             height = sum(map(lambda x: x.height + space, self.children)) + self.header
         return width, height
 
-
-    def update_coordinates(insert=(0, 0)):
+    def update_coordinates(self, insert: (int, int) = (0, 0)) -> None:
         self._x, self._y = insert
 
-        #update children coordinates
+        # update children coordinates
         if self._axis == 'horizontal':
             w = self._x
             h = self._y + (self.height + self.header) / 2
@@ -103,37 +104,31 @@ class Box:
                 w += child.width
         else:
             w = self._x + self.width / 2
-            h = y + self.header - space
+            h = self._y + self.header - space
             for child in self.children:
                 h += space
                 child.update_coordinates(insert=(w - child.width / 2, h))
                 h += child.height
 
-
     @property
     def name(self):
         return self._name
-
 
     @property
     def width(self):
         return self._width
 
-
     @property
     def height(self):
         return self._height
-
 
     @property
     def children(self):
         return self._children
 
-
     @property
     def transitions(self):
         return self._transitions
-
 
     @property
     def entry(self):
@@ -143,7 +138,6 @@ class Box:
     def parallel_states(self):
         return self._parallel_states
 
-
     @property
     def orthogonal_state(self):
         """
@@ -151,9 +145,8 @@ class Box:
         children have parallel_states.
         """
         for child in self._children:
-            if child._parallel_states != []:
+            if child._parallel_states:
                 return True
-
 
     @property
     def header(self):
@@ -167,19 +160,16 @@ class Box:
             h += space + char_height
         return h
 
-
     @property
     def coordinates(self):
         """
         The coordinates of the Box with (insert=(x1, y1), end=(x2, y2))
         """
-        return (self._x1, self._y1), (self._x1 + width, self._y2 + height)
-
+        return (self._x, self._y), (self._x + self.width, self._y + self.height)
 
     @property
     def shape(self):
         return self._shape
-
 
     @property
     def parent(self):
@@ -187,8 +177,6 @@ class Box:
 
 
 class InitBox(Box):
-
-
     def __init__(self, root_state):
         self._name = ''
         self._axis = None
@@ -201,18 +189,15 @@ class InitBox(Box):
         self._x, self._y = 0, 0
         self._shape = 'circle'
 
-
     def compute_dimensions(self):
-        return radius*2, radius*2
+        return radius * 2, radius * 2
 
 
 class RootBox(Box):
-
-
     def __init__(self, statechart):
         self._name = statechart.name
         # first initializes all the boxes
-        self._inner_states = [Boxes(name) for name in statechart.states()]
+        self._inner_states = [Box(name) for name in statechart.states()]
         self._statechart = statechart
 
         def init(state, horizontal_axis=True):
@@ -221,34 +206,33 @@ class RootBox(Box):
                 axis = 'horizontal'
             else:
                 axis = 'vertical'
-            box = next(x for x in self._inner_states if x.name==state.name)
+            box = next(x for x in self._inner_states if x.name == state.name)
             children_statechart = statechart.children_for(state.name)
             children = []
             for child in children_statechart:
-                children += [init(statechart.state_for(child), not(horizontal_axis))]
+                children += [init(statechart.state_for(child), not (horizontal_axis))]
 
             if isinstance(state, CompoundState) and state.initial is not None:
-                root_state = next(x for x in children if x.name==state.initial)
+                root_state = next(x for x in children if x.name == state.initial)
                 children = [InitBox(root_state), root_state] + list(filter(lambda x: x is not root_state, children))
 
             entry, exit = None, None
-            if state.on_entry is not None: entry=state.on_entry
-            if state.on_exit is not None: exit=state.on_exit
+            if state.on_entry is not None: entry = state.on_entry
+            if state.on_exit is not None: exit = state.on_exit
             if isinstance(state, OrthogonalState):
                 for child in children:
                     child.update(parallel_states=list(filter(lambda x: x is not child, children)))
             box.update(new_children=children, entry=entry, exit=exit, root_state=root_state, axis=axis)
 
         root = init(statechart.root)
-        update(new_children=[InitBox(root), root])
-
+        self.update(new_children=[InitBox(root), root])
 
     @property
     def transitions(self):
         """
         Return all the transitions in this box
         """
-        transitions = [] #List[Transition]
+        transitions = []  # List[Transition]
 
         def find_transitions(box, transitions):
             for child in box.children:
