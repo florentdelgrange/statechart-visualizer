@@ -13,7 +13,7 @@ def get_shape(box: Box):
     :param box: the box to render
     :return: the svg object related
     """
-    x, y = box.coordinates
+    x, y = box.coordinates[0]
     if box.shape == 'rectangle':
         return svgwrite.shapes.Rect(insert=(x, y), size=(box.width, box.height),
                                     fill=svgwrite.rgb(135, 206, 235),
@@ -40,7 +40,7 @@ def render(box: Box):
 
     # Now draw the name of the box
     w, h = box.get_text_position_of('name')
-    if box.parallel_state:
+    if box.parallel_states:
         t1 = svgwrite.text.Text("<<parallel>>", insert=(w, h), style=italic_style, textLength=13 * char_width)
         t2 = svgwrite.text.Text(box.name, insert=(w + 14 * char_width, h), style=bold_style,
                                 textLength=len(box.name) * char_width)
@@ -53,8 +53,8 @@ def render(box: Box):
     w, h = box.get_text_position_of('entry')
     if box.entry != '':
         g.add(svgwrite.text.Text("entry / ", insert=(w, h), style=italic_style, textLength=8 * char_width))
-        g.add(svgwrite.text.Text(box.preamble, insert=(w + 9 * char_width, h), style=normal_style,
-                                 textLength=len(box.preamble) * char_width))
+        g.add(svgwrite.text.Text(box.entry, insert=(w + 9 * char_width, h), style=normal_style,
+                                 textLength=len(box.entry) * char_width))
 
     # TODO: exit zone
 
