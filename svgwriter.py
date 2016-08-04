@@ -63,3 +63,14 @@ def render(box: Box):
         g.add(render(child))
 
     return g
+
+
+def export(box: Box):
+    """
+    Creates the svg file that represents the Box
+
+    :param box: the box that will be on the svg file
+    """
+    dwg = svgwrite.Drawing(box.name + ".svg", size=(box.width, box.height))
+    dwg.add(render(box))
+    dwg.save()
