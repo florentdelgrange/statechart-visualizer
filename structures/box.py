@@ -27,10 +27,10 @@ class Box:
         self._x, self._y = 0, 0
         self._shape = 'rectangle'
 
-    def update(self, new_children: object = None, new_transitions: object = None, entry: str = None,
+    def update(self, new_children: list[object] = None, new_transitions: list[Transition] = None, entry: str = None,
                exit: str = None,
                root_state: object = None,
-               axis: str = '', parallel_states: object = None) -> None:
+               axis: str = '', parallel_states: list[object] = None) -> None:
         """
         Update the dimensions of the box. Some optional parameters can be added
         so that they are updated at the same time.
@@ -207,6 +207,10 @@ class Box:
     @property
     def parent(self):
         return self._parent
+
+    @property
+    def axis(self):
+        return self._axis
 
 
 class InitBox(Box):
