@@ -1,9 +1,10 @@
-import yaml, box
+import svgwriter
+from sismic import io, model
+from structures.box import RootBox
 
-#test
+# test
 with open("tests/elevator.yaml", 'r') as stream:
-    try:
-        b = box.Box(yaml.load(stream)['statechart'])
-        b.export()
-    except yaml.YAMLError as exc:
-        print(exc)
+    statechart = io.import_from_yaml(stream)
+    assert isinstance(statechart, model.Statechart)
+
+svgwriter.export(RootBox(statechart=statechart))
