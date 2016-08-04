@@ -90,6 +90,26 @@ class Box:
         return width, height
 
 
+    def update_coordinates(insert=(0, 0)):
+        self._x, self._y = insert
+
+        #update children coordinates
+        if self._axis == 'horizontal':
+            w = self._x
+            h = self._y + (self.height + self.header) / 2
+            for child in self.children:
+                w += space
+                child.update_coordinates(insert=(w, h - child.height / 2))
+                w += child.width
+        else:
+            w = self._x + self.width / 2
+            h = y + self.header - space
+            for child in self.children:
+                h += space
+                child.update_coordinates(insert=(w - child.width / 2, h))
+                h += child.height
+
+
     @property
     def name(self):
         return self._name
