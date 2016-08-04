@@ -22,7 +22,7 @@ class Box:
         self._exit = ''  # type: str
         self._root_state = None  # type: Box ; Initial inner state in this Box
         self._parent = None  # type: Box
-        self._text_coordinates = {}  # type Dict[str: (int, int)]
+        self._text_coordinates = {'name': (0, 0), 'exit': (0, 0), 'entry': (0, 0)}  # type Dict[str: (int, int)]
         self._width, self._height = 0, 0
         self._x, self._y = 0, 0
         self._shape = 'rectangle'
@@ -42,18 +42,24 @@ class Box:
         :param exit: exit text of this Box
         :param root_state: initial state of this Box
         :param axis: the axis of the box; must be vertical or horizontal
-        :param parallel_states: the list of parralel Boxes
+        :param parallel_states: the list of parallel Boxes
         """
         if new_children is not None:
             self._children += new_children
             for child in new_children:
                 child._parent = self
-        if new_transitions is not None: self._transitions += new_transitions
-        if entry is not None: self._entry = entry
-        if exit is not None: self._exit = exit
-        if root_state is not None: self._root_state = root_state
-        if axis == 'vertical' or axis == 'horizontal': self._axis = axis
-        if parallel_states is not None: self._parallel_states = parallel_states
+        if new_transitions is not None:
+            self._transitions += new_transitions
+        if entry is not None:
+            self._entry = entry
+        if exit is not None:
+            self._exit = exit
+        if root_state is not None:
+            self._root_state = root_state
+        if axis == 'vertical' or axis == 'horizontal':
+            self._axis = axis
+        if parallel_states is not None:
+            self._parallel_states = parallel_states
 
         self._width, self._height = self.compute_dimensions()
 
@@ -91,9 +97,36 @@ class Box:
             height = sum(map(lambda x: x.height + space, self.children)) + self.header
         return width, height
 
+    def get_text_position_of(self, attribute):
+        """
+        get the position of the attribute entered in parameter
+
+        :param attribute: 'name' | 'entry' | 'exit'
+        :return: the position of the attribute
+        """
+        return self._text_coordinates[attribute]
+
     def update_coordinates(self, insert: (int, int) = (0, 0)) -> None:
         self._x, self._y = insert
 
+        # update text coordinates
+        # name coordinates
+        w = self._x + self.width / 2
+        h = self._y + space + char_height
+        if self._parallel_states:
+            w -= (len(self.name) * char_width + 13 * char_width) / 2 # for the <<parallel>> zone left to the name
+        else:
+            w -= (len(self.name) * char_width) / 2
+        self._text_coordinates['name'] = (w, h)
+
+        # 'on entry' zone coordinates
+        if self._entry != '':
+            w = self._x + space
+            h += space + char_height
+            w -= len(self.name) * char_width + 13
+            self._text_coordinates['entry'] = (w, h)
+
+        #TODO : 'exit' zone
         # update children coordinates
         if self._axis == 'horizontal':
             w = self._x
@@ -195,7 +228,8 @@ class InitBox(Box):
 
 class RootBox(Box):
     def __init__(self, statechart):
-        self._name = statechart.name
+        super().__init__(self, statechart.name, 'horizontal')
+
         # first initializes all the boxes
         self._inner_states = [Box(name) for name in statechart.states()]
         self._statechart = statechart
