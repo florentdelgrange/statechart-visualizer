@@ -176,9 +176,7 @@ class Box:
         return True if this state is an orthogonal state ie their
         children have parallel_states.
         """
-        for child in self._children:
-            if child._parallel_states:
-                return True
+        return next((True for child in self.children if child.parallel_states), False)
 
     @property
     def header(self):
