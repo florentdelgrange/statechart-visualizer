@@ -56,6 +56,16 @@ class Box:
 
         self._width, self._height = compute_dimensions()
 
+        if self.orthogonal_state:
+            if self._axis == 'horizontal':
+                height = max(map(lambda x: x.height, self.children))
+                for brother in self.children:
+                    brother._height = height
+            else:
+                width = max(map(lambda x: x.width, self.children))
+                for brother in self.children:
+                    brother._width = width
+
 
     def compute_dimensions(self):
         """
@@ -112,6 +122,17 @@ class Box:
     @property
     def parallel_states(self):
         return self._parallel_states
+
+
+    @property
+    def orthogonal_state(self):
+        """
+        return True if this state is an orthogonal state ie their
+        children have parallel_states.
+        """
+        for child in self._children:
+            if child._parallel_states != []:
+                return True
 
 
     @property
