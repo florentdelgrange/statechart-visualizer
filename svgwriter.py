@@ -69,9 +69,14 @@ def render_box(box: Box):
 def render_transitions(transitions):
     lines = []
     for t in transitions:
-        (x1, y1), (x2, y2) = t.coordinates
-        lines += [svgwrite.shapes.Line(start=(x1, y1), end=(x2, y2), stroke='black', stroke_width=1,
-                                       marker_end="url(#arrow)")]
+        if t.polyline:
+            lines += [
+                svgwrite.shapes.Polyline(points=t.polyline, stroke='black', stroke_width=1, fill="none",
+                                         marker_end="url(#arrow)")]
+        else:
+            (x1, y1), (x2, y2) = t.coordinates
+            lines += [svgwrite.shapes.Line(start=(x1, y1), end=(x2, y2), stroke='black', stroke_width=1,
+                                           marker_end="url(#arrow)")]
     return lines
 
 

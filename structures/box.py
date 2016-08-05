@@ -80,18 +80,23 @@ class Box:
         :param box: the box to determine the zone compared to self
         :return: the zone of the box
         """
-        (x1, y1), (x2, y2) = self.coordinates
-        (x3, y3), (x4, y4) = box.coordinates
-        x1, y1 = ((x1 + x2) / 2, (y1 + y2) / 2)
-        x2, y2 = ((x3 + x4) / 2, (y3 + y4) / 2)
-        if x1 <= x2 and y1 >= y2:
-            return 'northeast'
-        elif x1 >= x2 and y1 >= y2:
-            return 'northwest'
-        elif x1 >= x2 and y1 <= y2:
-            return 'southwest'
+        if box in self.ancestors:
+            return 'inside'
+        elif self in box.ancestors:
+            return 'a container'
         else:
-            return 'southeast'
+            (x1, y1), (x2, y2) = self.coordinates
+            (x3, y3), (x4, y4) = box.coordinates
+            x1, y1 = ((x1 + x2) / 2, (y1 + y2) / 2)
+            x2, y2 = ((x3 + x4) / 2, (y3 + y4) / 2)
+            if x1 <= x2 and y1 >= y2:
+                return 'northeast'
+            elif x1 >= x2 and y1 >= y2:
+                return 'northwest'
+            elif x1 >= x2 and y1 <= y2:
+                return 'southwest'
+            else:
+                return 'southeast'
 
     def compute_dimensions(self):
         """
@@ -218,6 +223,13 @@ class Box:
         return (self._x, self._y), (self._x + self.width, self._y + self.height)
 
     @property
+    def ancestors(self):
+        if self.parent is not None:
+            return [self.parent] + self.parent.ancestors
+        else:
+            return []
+
+    @property
     def shape(self):
         return self._shape
 
@@ -228,6 +240,26 @@ class Box:
     @property
     def axis(self):
         return self._axis
+
+    @property
+    def zone(self):
+        """
+        :return: the zone of the box following its parent
+        """
+        if self.parent.children.index(self) <= len(self.parent.children) / 2 - 1:
+            if self.parent.axis == 'horizontal':
+                return 'west'
+            else:
+                return 'north'
+        else:
+            if self.parent.axis == 'horizontal':
+                return 'east'
+            else:
+                return 'south'
+
+    @property
+    def have_self_transition(self):
+        return next((True for t in self.transitions if t.target == self), False)
 
 
 class InitBox(Box):
@@ -334,9 +366,9 @@ class RootBox(Box):
             # First check if it is possible to draw directly a transition in with one line.
             source = transition.source
             target = transition.target
+            (x1, y1), (x2, y2) = source.coordinates
+            (x3, y3), (x4, y4) = target.coordinates
             if source != target:
-                (x1, y1), (x2, y2) = source.coordinates
-                (x3, y3), (x4, y4) = target.coordinates
                 direction = source.zone_of(target)
                 acc = acceptance_zone(source, target, 'horizontal')
                 if acc is not None:
@@ -355,3 +387,23 @@ class RootBox(Box):
                             transition.update_coordinates(start=(x, y1), end=(x, y4))
                         else:
                             transition.update_coordinates(start=(x, y2), end=(x, y3))
+            else:
+                if source.zone == 'north':
+                    transition.polyline = [((x1 + x2) / 2, y1), ((x1 + x2) / 2, y1 - space),
+                                           (x1 - space, y1 - space), (x1 - space, (y1 + y2) / 2),
+                                           (x1, (y1 + y2) / 2)]
+                elif source.zone == 'south':
+                    transition.polyline = [((x1 + x2) / 2, y2), ((x1 + x2) / 2, y2 + space),
+                                           (x2 + space, y2 + space),
+                                           (x2 + space, (y1 + y2) / 2), (x2, (y1 + y2) / 2)]
+                elif source.zone == 'west':
+                    transition.polyline = [(x1, (y1 + y2) / 2), (x1 - space, (y1 + y2) / 2),
+                                           (x1 - space, y1 - space), ((x1 + x2) / 2, y1 - space), ((x1 + x2) / 2, y1)]
+                else:
+                    transition.polyline = [(x2, (y1 + y2) / 2), (x2 + space, (y1 + y2) / 2),
+                                           (x2 + space, y2 + space), ((x1 + x2) / 2, y2 + space),
+                                           ((x1 + x2) / 2, y2)]
+
+    @property
+    def zone(self):
+        return 'all'

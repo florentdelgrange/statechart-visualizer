@@ -6,6 +6,7 @@ class Transition:
         self.event = event
         self.action = action
         self.x1, self.x2, self.y1, self.y2 = 0, 0, 0, 0
+        self.polyline = []
 
     @property
     def coordinates(self):
