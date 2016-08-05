@@ -246,26 +246,44 @@ class RootBox(Box):
             entry, exit = None, None
             if state.on_entry is not None: entry = state.on_entry
             if state.on_exit is not None: exit = state.on_exit
+
+            # now check the transitions
+            transitions = statechart.transitions_from(state.name)
+            if transitions:
+                transitions = map(
+                    lambda t: Transition(source=box, target=next(x for x in self._inner_states if x.name == t.target)),
+                    transitions)
+            else:
+                transitions = None
+
             if isinstance(state, OrthogonalState):
                 for child in children:
                     child.update(parallel_states=list(filter(lambda x: x is not child, children)))
-            box.update(new_children=children, entry=entry, exit=exit, root_state=root_state, axis=axis)
+            box.update(new_children=children, new_transitions=transitions, entry=entry, exit=exit,
+                       root_state=root_state, axis=axis)
             return box
 
         root = init(statechart.state_for(statechart.root), self._axis)
         self.update(new_children=[InitBox(root), root], entry=statechart.preamble)
+
+    def update(self, new_children=None, new_transitions=None, entry=None,
+               exit=None,
+               root_state=None,
+               axis='', parallel_states=None):
+        super().update(new_children, new_transitions, entry, exit, root_state, axis, parallel_states)
         self.update_coordinates()
+        print(self.transitions)
 
     @property
     def transitions(self):
         """
         Return all the transitions in this box
         """
-        transitions = []  # List[Transition]
 
-        def find_transitions(box, transitions):
+        def find_transitions(box, transitions=[]):
+            t = []
             for child in box.children:
-                transitions += child.transitions
-                find_transitions(child)
+                t += find_transitions(child, child.transitions)
+            return transitions + t
 
-        return find_transitions(self, transitions)
+        return find_transitions(self)
