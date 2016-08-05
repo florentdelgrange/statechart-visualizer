@@ -19,13 +19,13 @@ def get_shape(box: Box):
                                     fill=svgwrite.rgb(135, 206, 235),
                                     stroke='black', stroke_width=1)
     elif box.shape == 'circle':
-        return svgwrite.shapes.Circle(center=(x+radius, y+radius), r=radius)
+        return svgwrite.shapes.Circle(center=(x + radius, y + radius), r=radius)
     else:
         return svgwrite.shapes.Rect(insert=(x, y), size=(box.width, box.height),
                                     fill="#044B94", fill_opacity="0.4")
 
 
-def render(box: Box):
+def render_box(box: Box):
     """
     creates the shapes of the boxes and puts it in a svg group
 
@@ -57,12 +57,22 @@ def render(box: Box):
                                  textLength=len(box.entry) * char_width))
 
     # TODO: exit zone
+    # TODO : do zone
 
     # Finally draw the children following the axis (horizontal or vertical)
     for child in box.children:
-        g.add(render(child))
+        g.add(render_box(child))
 
     return g
+
+
+def render_transitions(transitions):
+    lines = []
+    for t in transitions:
+        (x1, y1), (x2, y2) = t.coordinates
+        lines += [svgwrite.shapes.Line(start=(x1, y1), end=(x2, y2), stroke='black', stroke_width=1,
+                                       marker_end="url(#arrow)")]
+    return lines
 
 
 def export(box: Box):
@@ -72,5 +82,12 @@ def export(box: Box):
     :param box: the box that will be on the svg file
     """
     dwg = svgwrite.Drawing(box.name + ".svg", size=(box.width, box.height))
-    dwg.add(render(box))
+    dwg.add(render_box(box))
+    marker = svgwrite.container.Marker(insert=(8, 3), orient='auto', markerWidth=30, markerHeight=20,
+                                       id="arrow")
+    path = svgwrite.path.Path(d="M0,0 L0,6 L9,3 z")
+    marker.add(path)
+    dwg.defs.add(marker)
+    for transition in render_transitions(box.transitions):
+        dwg.add(transition)
     dwg.save()

@@ -73,6 +73,26 @@ class Box:
                 for brother in self.children:
                     brother._width = width
 
+    def zone_of(self, box):
+        """
+        box is ___ of self
+
+        :param box: the box to determine the zone compared to self
+        :return: the zone of the box
+        """
+        (x1, y1), (x2, y2) = self.coordinates
+        (x3, y3), (x4, y4) = box.coordinates
+        x1, y1 = ((x1 + x2) / 2, (y1 + y2) / 2)
+        x2, y2 = ((x3 + x4) / 2, (y3 + y4) / 2)
+        if x1 <= x2 and y1 >= y2:
+            return 'northeast'
+        elif x1 >= x2 and y1 >= y2:
+            return 'northwest'
+        elif x1 >= x2 and y1 <= y2:
+            return 'southwest'
+        else:
+            return 'southeast'
+
     def compute_dimensions(self):
         """
         Compute the dimensions of the box.
@@ -223,7 +243,7 @@ class InitBox(Box):
 
 class RootBox(Box):
     def __init__(self, statechart):
-        super().__init__(name=statechart.name, axis='horizontal')
+        super().__init__(name=statechart.name, axis='vertical')
 
         # first initializes all the boxes
         self._inner_states = [Box(name) for name in statechart.states]
@@ -272,12 +292,12 @@ class RootBox(Box):
                axis='', parallel_states=None):
         super().update(new_children, new_transitions, entry, exit, root_state, axis, parallel_states)
         self.update_coordinates()
-        print(self.transitions)
 
     @property
     def transitions(self):
         """
         Return all the transitions in this box
+        Compute their positions and update them
         """
 
         def find_transitions(box, transitions=[]):
@@ -286,4 +306,52 @@ class RootBox(Box):
                 t += find_transitions(child, child.transitions)
             return transitions + t
 
-        return find_transitions(self)
+        transitions = find_transitions(self)
+        self.update_transitions_coordinates(transitions)
+        return transitions
+
+    def update_transitions_coordinates(self, transitions):
+        def acceptance_zone(box1, box2, axis):
+            """
+            Check and compute if it is possible to draw a transition directly to another box
+            with just one line
+            """
+            if axis == 'horizontal':
+                x1, x2 = box1.coordinates[0][1], box1.coordinates[1][1]
+                x3, x4 = box2.coordinates[0][1], box2.coordinates[1][1]
+            else:
+                x1, x2 = box1.coordinates[0][0], box1.coordinates[1][0]
+                x3, x4 = box2.coordinates[0][0], box2.coordinates[1][0]
+            if x1 < x2 and x3 < x4:
+                x = [x1, x2, x3, x4]
+                x.remove(min(x))
+                x.remove(max(x))
+                a, b = min(x), max(x)
+                if (a >= x1 and b <= x2) and (a >= x3 and b <= x4):
+                    return a, b
+
+        for transition in transitions:
+            # First check if it is possible to draw directly a transition in with one line.
+            source = transition.source
+            target = transition.target
+            if source != target:
+                (x1, y1), (x2, y2) = source.coordinates
+                (x3, y3), (x4, y4) = target.coordinates
+                direction = source.zone_of(target)
+                acc = acceptance_zone(source, target, 'horizontal')
+                if acc is not None:
+                    y = (acc[0] + acc[1]) / 2
+                    if direction == 'southwest' or direction == 'northwest':
+                        transition.update_coordinates(start=(x1, y), end=(x4, y))
+                    else:
+                        transition.update_coordinates(start=(x2, y), end=(x3, y))
+                # vertical test
+                else:
+                    acc = acceptance_zone(source, target, 'vertical')
+                    if acc is not None:
+                        x = (acc[0] + acc[1]) / 2
+                        # draw the arrow
+                        if direction == 'northeast' or direction == 'northwest':
+                            transition.update_coordinates(start=(x, y1), end=(x, y4))
+                        else:
+                            transition.update_coordinates(start=(x, y2), end=(x, y3))
