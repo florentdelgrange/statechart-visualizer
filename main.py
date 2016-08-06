@@ -1,6 +1,6 @@
 import svgwriter
 from sismic import io, model
-from structures.box import RootBox
+from structures.box_elements import RootBox
 
 # test
 with open("tests/elevator.yaml", 'r') as stream:
