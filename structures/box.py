@@ -114,14 +114,27 @@ class Box:
         if self.axis == 'horizontal':
             width = max(sum(map(lambda x: x.width + space, self.children)) + space,
                         space + p_len + char_width * len(self.name) + space, 2 * space + entry_len)
-            #+ sum(map(lambda x: space, lambda filter(lambda child: child.has_self_transition, self.children)))
             height = max(list(map(lambda x: x.height, self.children)) or [0]) + self.header + 2 * space
-            #+ next(map(lambda x: space, lambda filter(lambda child: child.has_self_transition and child.zone == 'west', self.children)), 0)
-            #+ next(map(lambda x: space, lambda filter(lambda child: child.has_self_transition and child.zone == 'east', self.children)), 0)
+            # self transitions
+            width += sum(map(lambda x: space, filter(lambda child: child.has_self_transition, self.children)))
+            height += next(map(lambda x: space,
+                               filter(lambda child: child.has_self_transition and child.zone == 'west', self.children)),
+                           0)
+            height += next(map(lambda x: space,
+                               filter(lambda child: child.has_self_transition and child.zone == 'east', self.children)),
+                           0)
         else:
             width = max(max(list(map(lambda x: x.width, self.children)) or [0]) + 2 * space,
                         space + p_len + char_width * len(self.name) + space, 2 * space + entry_len)
             height = sum(map(lambda x: x.height + space, self.children)) + self.header
+            # self transitions
+            width += next(map(lambda x: space,
+                              filter(lambda child: child.has_self_transition and child.zone == 'north', self.children)),
+                          0)
+            width += next(map(lambda x: space,
+                              filter(lambda child: child.has_self_transition and child.zone == 'south', self.children)),
+                          0)
+            height += sum(map(lambda x: space, filter(lambda child: child.has_self_transition, self.children)))
 
         return width, height
 
@@ -155,20 +168,29 @@ class Box:
 
         # TODO : 'exit' zone
         # update children coordinates
+
         if self._axis == 'horizontal':
             w = self._x
             h = self._y + (self.height + self.header) / 2
             for child in self.children:
                 w += space
+                if child.has_self_transition and child.zone == 'west':
+                    w += space
                 child.update_coordinates(insert=(w, h - child.height / 2))
                 w += child.width
+                if child.has_self_transition and child.zone == 'east':
+                    w += space
         else:
             w = self._x + self.width / 2
             h = self._y + self.header - space
             for child in self.children:
                 h += space
+                if child.has_self_transition and child.zone == 'north':
+                    h += space
                 child.update_coordinates(insert=(w - child.width / 2, h))
                 h += child.height
+                if child.has_self_transition and child.zone == 'south':
+                    h += space
 
     @property
     def name(self):
@@ -261,5 +283,5 @@ class Box:
                 return 'south'
 
     @property
-    def have_self_transition(self):
+    def has_self_transition(self):
         return next((True for t in self.transitions if t.target == self), False)
