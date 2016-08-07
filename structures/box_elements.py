@@ -16,7 +16,7 @@ class InitBox(Box):
 
 class RootBox(Box):
     def __init__(self, statechart):
-        super().__init__(name=statechart.name, axis='horizontal')
+        super().__init__(name=statechart.name, axis='vertical')
 
         # first initializes all the boxes
         self._inner_states = [Box(name) for name in statechart.states]
@@ -105,6 +105,28 @@ class RootBox(Box):
                 if (a >= x1 and b <= x2) and (a >= x3 and b <= x4):
                     return a, b
 
+        def classic_arrow(transition):
+            source = transition.source
+            target = transition.target
+            (x1, y1), (x2, y2) = source.coordinates
+            (x3, y3), (x4, y4) = target.coordinates
+            if source.parent.axis == 'horizontal' and source.zone_of(target) == 'northwest':
+                transition.polyline = [((x1 + x2) / 2, y1), ((x1 + x2) / 2, (y3 + y4) / 2), (x4, (y3 + y4) / 2)]
+            elif source.parent.axis == 'horizontal' and source.zone_of(target) == 'northeast':
+                transition.polyline = [((x1 + x2) / 2, y1), ((x1 + x2) / 2, (y3 + y4) / 2), (x3, (y3 + y4) / 2)]
+            elif source.parent.axis == 'horizontal' and source.zone_of(target) == 'southwest':
+                transition.polyline = [((x1 + x2) / 2, y2), ((x1 + x2) / 2, (y3 + y4) / 2), (x4, (y3 + y4) / 2)]
+            elif source.parent.axis == 'horizontal' and source.zone_of(target) == 'southeast':
+                transition.polyline = [((x1 + x2) / 2, y2), ((x1 + x2) / 2, (y3 + y4) / 2), (x3, (y3 + y4) / 2)]
+            elif source.parent.axis == 'vertical' and source.zone_of(target) == 'northwest':
+                transition.polyline = [(x1, (y1 + y2) / 2), ((x3 + x4) / 2, (y1 + y2) / 2), ((x3 + x4) / 2, y4)]
+            elif source.parent.axis == 'vertical' and source.zone_of(target) == 'northeast':
+                transition.polyline = [(x2, (y1 + y2) / 2), ((x3 + x4) / 2, (y1 + y2) / 2), ((x3 + x4) / 2, y4)]
+            elif source.parent.axis == 'vertical' and source.zone_of(target) == 'southwest':
+                transition.polyline = [(x1, (y1 + y2) / 2), ((x3 + x4) / 2, (y1 + y2) / 2), ((x3 + x4) / 2, y3)]
+            else:
+                transition.polyline = [(x2, (y1 + y2) / 2), ((x3 + x4) / 2, (y1 + y2) / 2), ((x3 + x4) / 2, y3)]
+
         for transition in self.transitions:
             # First check if it is possible to draw directly a transition in with one line.
             source = transition.source
@@ -116,7 +138,6 @@ class RootBox(Box):
                     filter(lambda t: t.target == source, target.transitions)))
                 same_target_index = (list(filter(lambda t: t.target == target, source.transitions)) + list(
                     filter(lambda t: t.target == source, target.transitions))).index(transition)
-                print(transition, "counter of target ? ", same_target_counter, "index of target ? ", same_target_index)
                 direction = source.zone_of(target)
                 acc = acceptance_zone(source, target, 'horizontal')
                 if acc is not None:
@@ -136,6 +157,9 @@ class RootBox(Box):
                             transition.update_coordinates(start=(x, y1), end=(x, y4))
                         else:
                             transition.update_coordinates(start=(x, y2), end=(x, y3))
+                    else:
+                        # classic arrow
+                        classic_arrow(transition)
             else:
                 if source.zone == 'north':
                     transition.polyline = [((x1 + x2) / 2, y1), ((x1 + x2) / 2, y1 - space),

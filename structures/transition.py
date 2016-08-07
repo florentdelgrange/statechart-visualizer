@@ -5,16 +5,19 @@ class Transition:
         self.guard = guard
         self.event = event
         self.action = action
-        self.x1, self.x2, self.y1, self.y2 = 0, 0, 0, 0
+        self._x1, self._x2, self._y1, self._y2 = 0, 0, 0, 0
         self.polyline = []
 
     @property
     def coordinates(self):
-        return (self.x1, self.y1), (self.x2, self.y2)
+        if self.polyline:
+            return self.polyline[0], self.polyline[len(self.polyline) - 1]
+        else:
+            return (self._x1, self._y1), (self._x2, self._y2)
 
     def update_coordinates(self, start, end):
         (x1, y1), (x2, y2) = start, end
-        self.x1, self.x2, self.y1, self.y2 = x1, x2, y1, y2
+        self._x1, self._x2, self._y1, self._y2 = x1, x2, y1, y2
 
     def __str__(self):
         return "Transition : " + self.source.name + " -> " + self.target.name
