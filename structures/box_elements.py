@@ -16,7 +16,7 @@ class InitBox(Box):
 
 class RootBox(Box):
     def __init__(self, statechart):
-        super().__init__(name=statechart.name, axis='vertical')
+        super().__init__(name=statechart.name, axis='horizontal')
 
         # first initializes all the boxes
         self._inner_states = [Box(name) for name in statechart.states]
@@ -112,10 +112,16 @@ class RootBox(Box):
             (x1, y1), (x2, y2) = source.coordinates
             (x3, y3), (x4, y4) = target.coordinates
             if source != target:
+                same_target_counter = len(list(filter(lambda t: t.target == target, source.transitions)) + list(
+                    filter(lambda t: t.target == source, target.transitions)))
+                same_target_index = (list(filter(lambda t: t.target == target, source.transitions)) + list(
+                    filter(lambda t: t.target == source, target.transitions))).index(transition)
+                print(transition, "counter of target ? ", same_target_counter, "index of target ? ", same_target_index)
                 direction = source.zone_of(target)
                 acc = acceptance_zone(source, target, 'horizontal')
                 if acc is not None:
-                    y = (acc[0] + acc[1]) / 2
+                    h = acc[1] - acc[0]
+                    y = acc[0] + h / (same_target_counter + 1) + same_target_index * h / (same_target_counter + 1)
                     if direction == 'southwest' or direction == 'northwest':
                         transition.update_coordinates(start=(x1, y), end=(x4, y))
                     else:
@@ -124,7 +130,8 @@ class RootBox(Box):
                 else:
                     acc = acceptance_zone(source, target, 'vertical')
                     if acc is not None:
-                        x = (acc[0] + acc[1]) / 2
+                        w = acc[1] - acc[0]
+                        x = acc[0] + w / (same_target_counter + 1) + same_target_index * w / (same_target_counter + 1)
                         if direction == 'northeast' or direction == 'northwest':
                             transition.update_coordinates(start=(x, y1), end=(x, y4))
                         else:
