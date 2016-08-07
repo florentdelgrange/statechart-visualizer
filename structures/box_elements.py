@@ -159,8 +159,9 @@ class RootBox(Box):
                 return [(x, y2), (x, y), (x3, y)]
             elif source.parent.axis == 'vertical' and source.zone_of(target) == 'northwest':
                 l = generate_list('northwest')
-                l.sort(key=lambda t: math.sqrt((x1 - (t.target.coordinates[0][0] + t.target.coordinates[1][0]) / 2) ** 2 +
-                                               (y1 - t.target.coordinates[1][1]) ** 2))
+                l.sort(
+                    key=lambda t: math.sqrt((x1 - (t.target.coordinates[0][0] + t.target.coordinates[1][0]) / 2) ** 2 +
+                                            (y1 - t.target.coordinates[1][1]) ** 2))
                 target_counter = len(l)
                 target_index = l.index(transition)
                 h = y2 - y1
@@ -169,8 +170,9 @@ class RootBox(Box):
                 return [(x1, y), (x, y), (x, y4)]
             elif source.parent.axis == 'vertical' and source.zone_of(target) == 'northeast':
                 l = generate_list('northeast')
-                l.sort(key=lambda t: math.sqrt((x2 - (t.target.coordinates[0][0] + t.target.coordinates[1][0]) / 2) ** 2 +
-                                               (y1 - t.target.coordinates[1][1]) ** 2))
+                l.sort(
+                    key=lambda t: math.sqrt((x2 - (t.target.coordinates[0][0] + t.target.coordinates[1][0]) / 2) ** 2 +
+                                            (y1 - t.target.coordinates[1][1]) ** 2))
                 target_counter = len(l)
                 target_index = l.index(transition)
                 h = y2 - y1
@@ -179,8 +181,9 @@ class RootBox(Box):
                 return [(x2, y), (x, y), (x, y4)]
             elif source.parent.axis == 'vertical' and source.zone_of(target) == 'southwest':
                 l = generate_list('southwest')
-                l.sort(key=lambda t: math.sqrt((x1 - (t.target.coordinates[0][0] + t.target.coordinates[1][0]) / 2) ** 2 +
-                                               (y2 - t.target.coordinates[0][1]) ** 2))
+                l.sort(
+                    key=lambda t: math.sqrt((x1 - (t.target.coordinates[0][0] + t.target.coordinates[1][0]) / 2) ** 2 +
+                                            (y2 - t.target.coordinates[0][1]) ** 2))
                 target_counter = len(l)
                 target_index = l.index(transition)
                 h = y2 - y1
@@ -189,8 +192,9 @@ class RootBox(Box):
                 return [(x1, y), (x, y), (x, y3)]
             else:
                 l = generate_list('southeast')
-                l.sort(key=lambda t: math.sqrt((x2 - (t.target.coordinates[0][0] + t.target.coordinates[1][0]) / 2) ** 2 +
-                                               (y2 - t.target.coordinates[0][1]) ** 2))
+                l.sort(
+                    key=lambda t: math.sqrt((x2 - (t.target.coordinates[0][0] + t.target.coordinates[1][0]) / 2) ** 2 +
+                                            (y2 - t.target.coordinates[0][1]) ** 2))
                 target_counter = len(l)
                 target_index = l.index(transition)
                 h = y2 - y1
@@ -205,10 +209,14 @@ class RootBox(Box):
             (x1, y1), (x2, y2) = source.coordinates
             (x3, y3), (x4, y4) = target.coordinates
             if source != target:
-                same_target_counter = len(list(filter(lambda t: t.target == target, source.transitions)) + list(
-                    filter(lambda t: t.target == source, target.transitions)))
-                same_target_index = (list(filter(lambda t: t.target == target, source.transitions)) + list(
-                    filter(lambda t: t.target == source, target.transitions))).index(transition)
+                def generate_list():
+                    l = list(filter(lambda t: t.target == target, source.transitions)) + list(
+                        filter(lambda t: t.target == source, target.transitions))
+                    l.sort(key=lambda t: t.source.name + t.target.name)
+                    return l
+
+                same_target_counter = len(generate_list())
+                same_target_index = generate_list().index(transition)
                 direction = source.zone_of(target)
                 acc = acceptance_zone(source, target, 'horizontal')
                 if acc is not None:
