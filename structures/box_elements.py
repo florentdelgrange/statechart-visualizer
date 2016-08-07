@@ -1,3 +1,5 @@
+import math
+
 from structures.box import Box, radius, space
 from structures.transition import Transition
 from sismic.model.elements import CompoundState, OrthogonalState
@@ -110,22 +112,91 @@ class RootBox(Box):
             target = transition.target
             (x1, y1), (x2, y2) = source.coordinates
             (x3, y3), (x4, y4) = target.coordinates
+
+            generate_list = lambda zone: list(filter(lambda t: source.zone_of(t.target) == zone, source.transitions))
+
             if source.parent.axis == 'horizontal' and source.zone_of(target) == 'northwest':
-                transition.polyline = [((x1 + x2) / 2, y1), ((x1 + x2) / 2, (y3 + y4) / 2), (x4, (y3 + y4) / 2)]
+                l = generate_list('northwest')
+                l.sort(key=lambda t: math.sqrt((x1 - t.target.coordinates[1][0]) ** 2 +
+                                               (y1 - (
+                                                   t.target.coordinates[1][1] + t.target.coordinates[0][1]) / 2) ** 2))
+                target_counter = len(l)
+                target_index = l.index(transition)
+                w = x2 - x1
+                x = x1 + w / (target_counter + 1) + target_index * w / (target_counter + 1)
+                y = (y3 + y4) / 2
+                return [(x, y1), (x, y), (x4, y)]
             elif source.parent.axis == 'horizontal' and source.zone_of(target) == 'northeast':
-                transition.polyline = [((x1 + x2) / 2, y1), ((x1 + x2) / 2, (y3 + y4) / 2), (x3, (y3 + y4) / 2)]
+                l = generate_list('northeast')
+                l.sort(key=lambda t: math.sqrt((x2 - t.target.coordinates[0][0]) ** 2 +
+                                               (y1 - (
+                                                   t.target.coordinates[1][1] + t.target.coordinates[0][1]) / 2) ** 2))
+                target_counter = len(l)
+                target_index = l.index(transition)
+                w = x2 - x1
+                x = x2 - w / (target_counter + 1) - target_index * w / (target_counter + 1)
+                return [(x, y1), (x, y), (x3, y)]
             elif source.parent.axis == 'horizontal' and source.zone_of(target) == 'southwest':
-                transition.polyline = [((x1 + x2) / 2, y2), ((x1 + x2) / 2, (y3 + y4) / 2), (x4, (y3 + y4) / 2)]
+                l = generate_list('southwest')
+                l.sort(key=lambda t: math.sqrt((x1 - t.target.coordinates[1][0]) ** 2 +
+                                               (y2 - (
+                                                   t.target.coordinates[1][1] + t.target.coordinates[0][1]) / 2) ** 2))
+                target_counter = len(l)
+                target_index = l.index(transition)
+                w = x2 - x1
+                x = x1 + w / (target_counter + 1) + target_index * w / (target_counter + 1)
+                return [(x, y2), (x, y), (x4, y)]
             elif source.parent.axis == 'horizontal' and source.zone_of(target) == 'southeast':
-                transition.polyline = [((x1 + x2) / 2, y2), ((x1 + x2) / 2, (y3 + y4) / 2), (x3, (y3 + y4) / 2)]
+                l = generate_list('southeast')
+                l.sort(key=lambda t: math.sqrt((x2 - t.target.coordinates[0][0]) ** 2 +
+                                               (y2 - (
+                                                   t.target.coordinates[1][1] + t.target.coordinates[0][1]) / 2) ** 2))
+                target_counter = len(l)
+                target_index = l.index(transition)
+                w = x2 - x1
+                x = x2 - w / (target_counter + 1) - target_index * w / (target_counter + 1)
+                y = (y3 + y4) / 2
+                return [(x, y2), (x, y), (x3, y)]
             elif source.parent.axis == 'vertical' and source.zone_of(target) == 'northwest':
-                transition.polyline = [(x1, (y1 + y2) / 2), ((x3 + x4) / 2, (y1 + y2) / 2), ((x3 + x4) / 2, y4)]
+                l = generate_list('northwest')
+                l.sort(key=lambda t: math.sqrt((x1 - (t.target.coordinates[0][0] + t.target.coordinates[1][0]) / 2) ** 2 +
+                                               (y1 - t.target.coordinates[1][1]) ** 2))
+                target_counter = len(l)
+                target_index = l.index(transition)
+                h = y2 - y1
+                x = (x3 + x4) / 2
+                y = y1 + h / (target_counter + 1) + target_index * h / (target_counter + 1)
+                return [(x1, y), (x, y), (x, y4)]
             elif source.parent.axis == 'vertical' and source.zone_of(target) == 'northeast':
-                transition.polyline = [(x2, (y1 + y2) / 2), ((x3 + x4) / 2, (y1 + y2) / 2), ((x3 + x4) / 2, y4)]
+                l = generate_list('northeast')
+                l.sort(key=lambda t: math.sqrt((x2 - (t.target.coordinates[0][0] + t.target.coordinates[1][0]) / 2) ** 2 +
+                                               (y1 - t.target.coordinates[1][1]) ** 2))
+                target_counter = len(l)
+                target_index = l.index(transition)
+                h = y2 - y1
+                x = (x3 + x4) / 2
+                y = y1 + h / (target_counter + 1) + target_index * h / (target_counter + 1)
+                return [(x2, y), (x, y), (x, y4)]
             elif source.parent.axis == 'vertical' and source.zone_of(target) == 'southwest':
-                transition.polyline = [(x1, (y1 + y2) / 2), ((x3 + x4) / 2, (y1 + y2) / 2), ((x3 + x4) / 2, y3)]
+                l = generate_list('southwest')
+                l.sort(key=lambda t: math.sqrt((x1 - (t.target.coordinates[0][0] + t.target.coordinates[1][0]) / 2) ** 2 +
+                                               (y2 - t.target.coordinates[0][1]) ** 2))
+                target_counter = len(l)
+                target_index = l.index(transition)
+                h = y2 - y1
+                x = (x3 + x4) / 2
+                y = y2 - h / (target_counter + 1) - target_index * h / (target_counter + 1)
+                return [(x1, y), (x, y), (x, y3)]
             else:
-                transition.polyline = [(x2, (y1 + y2) / 2), ((x3 + x4) / 2, (y1 + y2) / 2), ((x3 + x4) / 2, y3)]
+                l = generate_list('southeast')
+                l.sort(key=lambda t: math.sqrt((x2 - (t.target.coordinates[0][0] + t.target.coordinates[1][0]) / 2) ** 2 +
+                                               (y2 - t.target.coordinates[0][1]) ** 2))
+                target_counter = len(l)
+                target_index = l.index(transition)
+                h = y2 - y1
+                x = (x3 + x4) / 2
+                y = y2 - h / (target_counter + 1) - target_index * h / (target_counter + 1)
+                return [(x2, y), (x, y), (x, y3)]
 
         for transition in self.transitions:
             # First check if it is possible to draw directly a transition in with one line.
@@ -159,7 +230,8 @@ class RootBox(Box):
                             transition.update_coordinates(start=(x, y2), end=(x, y3))
                     else:
                         # classic arrow
-                        classic_arrow(transition)
+                        transition.polyline = classic_arrow(transition)
+                        print(transition, transition.polyline)
             else:
                 if source.zone == 'north':
                     transition.polyline = [((x1 + x2) / 2, y1), ((x1 + x2) / 2, y1 - space),
