@@ -1,5 +1,5 @@
 import math
-from structures.box import space
+from structures.box import space, get_coordinates
 
 
 class Transition:
@@ -32,12 +32,6 @@ class Transition:
 
     def __repr__(self):
         return self.__str__()
-
-
-def get_coordinates(box, coordinates):
-    x1, y1 = coordinates[box]
-    width, height = box.dimensions
-    return (x1, y1), (x1 + width, y1 + height)
 
 
 def zone_of(box1, box2, coordinates):

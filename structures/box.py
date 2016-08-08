@@ -254,3 +254,9 @@ class Box:
     @property
     def has_self_transition(self):
         return next((True for t in self.transitions if t.target == self), False)
+
+
+def get_coordinates(box, coordinates):
+    x1, y1 = coordinates[box]
+    width, height = box.dimensions
+    return (x1, y1), (x1 + width, y1 + height)
