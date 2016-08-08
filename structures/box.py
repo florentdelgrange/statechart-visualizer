@@ -19,9 +19,6 @@ class Box:
         self._exit = ''  # type: str
         self._root_state = None  # type: Box ; Initial inner state in this Box
         self._parent = None  # type: Box
-        self._text_coordinates = {'name': (0, 0), 'exit': (0, 0), 'entry': (0, 0)}  # type Dict[str: (int, int)]
-        self._width, self._height = 0, 0
-        self._x, self._y = 0, 0
         self._shape = 'rectangle'
 
     def update(self, new_children=None, new_transitions=None, entry=None,
@@ -58,37 +55,15 @@ class Box:
         if parallel_states is not None:
             self._parallel_states = parallel_states
 
-        self._width, self._height = self.compute_dimensions()
-
-        if self.orthogonal_state:
-            if self._axis == 'horizontal':
-                height = max(map(lambda x: x.height, self.children))
-                for brother in self.children:
-                    brother._height = height
+    @property
+    def dimensions(self):
+        width, height = self.compute_dimensions()
+        if self.parallel_states:
+            if self.parent.axis == 'horizontal':
+                height = max(map(lambda x: x.compute_dimensions()[1], self.parent.children))
             else:
-                width = max(map(lambda x: x.width, self.children))
-                for brother in self.children:
-                    brother._width = width
-
-    def zone_of(self, box):
-        """
-        box is ___ of self
-
-        :param box: the box to determine the zone compared to self
-        :return: the zone of the box
-        """
-        (x1, y1), (x2, y2) = self.coordinates
-        (x3, y3), (x4, y4) = box.coordinates
-        x1, y1 = ((x1 + x2) / 2, (y1 + y2) / 2)
-        x2, y2 = ((x3 + x4) / 2, (y3 + y4) / 2)
-        if x1 <= x2 and y1 >= y2:
-            return 'northeast'
-        elif x1 >= x2 and y1 >= y2:
-            return 'northwest'
-        elif x1 >= x2 and y1 <= y2:
-            return 'southwest'
-        else:
-            return 'southeast'
+                width = max(map(lambda x: x.compute_dimensions()[0], self.parent.children))
+        return width, height
 
     def compute_dimensions(self):
         """
@@ -131,59 +106,57 @@ class Box:
 
         return width, height
 
-    def get_text_position_of(self, attribute):
+    def name_position(self, insert=(0, 0)):
         """
-        get the position of the attribute entered in parameter
-
-        :param attribute: 'name' | 'entry' | 'exit'
-        :return: the position of the attribute
+        gives the insert coordinates of the name following the insert coordinates of the Box (given in parameter)
+        :return: the coordinates of the name text
         """
-        return self._text_coordinates[attribute]
-
-    def update_coordinates(self, insert: (int, int) = (0, 0)):
-        self._x, self._y = insert
-
-        # update text coordinates
-        # name coordinates
-        w = self._x + self.width / 2
-        h = self._y + space + char_height
-        if self._parallel_states:
+        x, y = insert
+        w = x + self.width / 2
+        h = y + space + char_height
+        if self.parallel_states:
             w -= (len(self.name) * char_width + 13 * char_width) / 2  # for the <<parallel>> zone left to the name
         else:
             w -= (len(self.name) * char_width) / 2
-        self._text_coordinates['name'] = (w, h)
+        return w, h
 
-        # 'on entry' zone coordinates
+    def entry_position(self, insert=(0, 0)):
+        """
+        gives the coordinates of the entry zone insert position
+        """
+        w, h = self.name_position(insert)
         if self._entry != '':
-            w = self._x + space
+            w = insert[0] + space
             h += space + char_height
-            self._text_coordinates['entry'] = (w, h)
+        return w, h
 
-        # TODO : 'exit' zone
-        # update children coordinates
+    def coordinates(self, insert=(0, 0)):
+        x, y = insert
+        coordinates = {self: insert}
 
         if self._axis == 'horizontal':
-            w = self._x
-            h = self._y + (self.height + self.header) / 2
+            w = x
+            h = y + (self.height + self.header) / 2
             for child in self.children:
                 w += space
                 if child.has_self_transition and child.zone == 'west':
                     w += space
-                child.update_coordinates(insert=(w, h - child.height / 2))
+                coordinates.update(child.coordinates(insert=(w, h - child.height / 2)))
                 w += child.width
                 if child.has_self_transition and child.zone == 'east':
                     w += space
         else:
-            w = self._x + self.width / 2
-            h = self._y + self.header - space
+            w = x + self.width / 2
+            h = y + self.header - space
             for child in self.children:
                 h += space
                 if child.has_self_transition and child.zone == 'north':
                     h += space
-                child.update_coordinates(insert=(w - child.width / 2, h))
+                coordinates.update(child.coordinates(insert=(w - child.width / 2, h)))
                 h += child.height
                 if child.has_self_transition and child.zone == 'south':
                     h += space
+        return coordinates
 
     @property
     def name(self):
@@ -191,11 +164,11 @@ class Box:
 
     @property
     def width(self):
-        return self._width
+        return self.dimensions[0]
 
     @property
     def height(self):
-        return self._height
+        return self.dimensions[1]
 
     @property
     def children(self):
@@ -232,13 +205,6 @@ class Box:
         if self._entry != '':
             h += space + char_height
         return h
-
-    @property
-    def coordinates(self):
-        """
-        The coordinates of the Box with (insert=(x1, y1), end=(x2, y2))
-        """
-        return (self._x, self._y), (self._x + self.width, self._y + self.height)
 
     @property
     def ancestors(self):
