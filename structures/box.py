@@ -131,6 +131,13 @@ class Box:
         return w, h
 
     def coordinates(self, insert=(0, 0)):
+        """
+        Computes the coordinates of all the Boxes in this Box and returns a dict
+        whose key is a box and the value is the insert of the Box.
+
+        :param insert: (optional) the insert of the box - initially (0,0)
+        :return: the dictionary linking the boxes with their insert
+        """
         x, y = insert
         coordinates = {self: insert}
 
