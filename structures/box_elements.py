@@ -34,8 +34,6 @@ class RootBox(Box):
             if isinstance(state, CompoundState) and state.initial is not None:
                 root_state = next(x for x in children if x.name == state.initial)
                 children = [InitBox(root_state), root_state] + list(filter(lambda x: x is not root_state, children))
-            else:
-                root_state = None
 
             entry, exit = None, None
             if state.on_entry is not None: entry = state.on_entry
@@ -43,29 +41,30 @@ class RootBox(Box):
 
             # now check the transitions
             transitions = statechart.transitions_from(state.name)
-            if transitions:
-                transitions = map(
-                    lambda t: Transition(source=box, target=next(x for x in self._inner_states if x.name == t.target)),
-                    transitions)
-            else:
-                transitions = None
+            transitions = map(
+                lambda t: Transition(source=box, target=next(x for x in self._inner_states if x.name == t.target)),
+                transitions)
 
             if isinstance(state, OrthogonalState):
                 for child in children:
-                    child.update(parallel_states=list(filter(lambda x: x is not child, children)))
-            box.update(new_children=children, new_transitions=transitions, entry=entry, exit=exit,
-                       root_state=root_state, axis=axis)
+                    for parallel_state in filter(lambda x: x is not child, children):
+                        child.add_parallel_state(parallel_state)
+
+            for child in children:
+                box.add_child(child)
+            for transition in transitions:
+                box.add_transition(transition)
+
+            box.entry = entry
+            box.exit = exit
+            box.axis = axis
             return box
 
         root = init(statechart.state_for(statechart.root), self.axis)
-        self.update(new_children=[InitBox(root), root], entry=statechart.preamble)
-
-    def update(self, new_children=None, new_transitions=None, entry=None,
-               exit=None,
-               root_state=None,
-               axis='', parallel_states=None):
-        super().update(new_children, new_transitions, entry, exit, root_state, axis, parallel_states)
-        update_transitions_coordinates(self.transitions, self.coordinates())
+        self.add_child(InitBox(root))
+        self.add_child(root)
+        self.entry = statechart.preamble
+        update_transitions_coordinates(self.transitions, self.get_coordinates())
 
     @property
     def transitions(self):

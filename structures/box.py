@@ -17,43 +17,8 @@ class Box:
         self._transitions = []  # type: list[Transition]
         self._entry = ''  # type: str
         self._exit = ''  # type: str
-        self._root_state = None  # type: Box ; Initial inner state in this Box
         self._parent = None  # type: Box
         self._shape = 'rectangle'
-
-    def update(self, new_children=None, new_transitions=None, entry=None,
-               exit=None,
-               root_state=None,
-               axis='', parallel_states=None):
-        """
-        Update the dimensions of the box. Some optional parameters can be added
-        so that they are updated at the same time.
-        Note that the Box dimensions depend on these parameters.
-
-        :param new_children: list of Boxes to add to the children list of this Box
-        :param new_transitions: list of Transitions to add to the transitions list of this Box
-        :param entry: entry text of this Box
-        :param exit: exit text of this Box
-        :param root_state: initial state of this Box
-        :param axis: the axis of the box; must be vertical or horizontal
-        :param parallel_states: the list of parallel Boxes
-        """
-        if new_children is not None:
-            self._children += new_children
-            for child in new_children:
-                child._parent = self
-        if new_transitions is not None:
-            self._transitions += new_transitions
-        if entry is not None:
-            self._entry = entry
-        if exit is not None:
-            self._exit = exit
-        if root_state is not None:
-            self._root_state = root_state
-        if axis == 'vertical' or axis == 'horizontal':
-            self._axis = axis
-        if parallel_states is not None:
-            self._parallel_states = parallel_states
 
     @property
     def dimensions(self):
@@ -130,7 +95,7 @@ class Box:
             h += space + char_height
         return w, h
 
-    def coordinates(self, insert=(0, 0)):
+    def get_coordinates(self, insert=(0, 0)):
         """
         Computes the coordinates of all the Boxes in this Box and returns a dict
         whose key is a box and the value is the insert of the Box.
@@ -148,7 +113,7 @@ class Box:
                 w += space
                 if child.has_self_transition and child.zone == 'west':
                     w += space
-                coordinates.update(child.coordinates(insert=(w, h - child.height / 2)))
+                coordinates.update(child.get_coordinates(insert=(w, h - child.height / 2)))
                 w += child.width
                 if child.has_self_transition and child.zone == 'east':
                     w += space
@@ -159,7 +124,7 @@ class Box:
                 h += space
                 if child.has_self_transition and child.zone == 'north':
                     h += space
-                coordinates.update(child.coordinates(insert=(w - child.width / 2, h)))
+                coordinates.update(child.get_coordinates(insert=(w - child.width / 2, h)))
                 h += child.height
                 if child.has_self_transition and child.zone == 'south':
                     h += space
@@ -181,17 +146,50 @@ class Box:
     def children(self):
         return self._children
 
+    def add_child(self, box, constraint=None):
+        if type(box) is Box:
+            self._children.append(box)
+            box._parent = self
+            return True
+        return False
+
     @property
     def transitions(self):
         return self._transitions
+
+    def add_transition(self, transition):
+        if transition is not None and transition.source == self:
+            self._transitions.append(transition)
+            return True
+        return False
 
     @property
     def entry(self):
         return self._entry
 
+    @entry.setter
+    def entry(self, entry):
+        if type(entry) is str:
+            self._entry = entry
+
+    @property
+    def exit(self):
+        return self._exit
+
+    @entry.setter
+    def exit(self, exit):
+        if type(exit) is str:
+            self._exit = exit
+
     @property
     def parallel_states(self):
         return self._parallel_states
+
+    def add_parallel_state(self, parallel_state):
+        if type(parallel_state) is Box:
+            self._parallel_states.append(parallel_state)
+            return True
+        return False
 
     @property
     def orthogonal_state(self):
@@ -231,6 +229,11 @@ class Box:
     @property
     def axis(self):
         return self._axis
+
+    @axis.setter
+    def axis(self, axis):
+        if axis == 'horizontal' or axis == 'vertical':
+            self._axis = axis
 
     @property
     def zone(self):
