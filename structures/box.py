@@ -1,5 +1,3 @@
-from structures.transition import Transition
-
 char_width, char_height, space, radius = 10, 20, 20, 20
 
 
@@ -79,23 +77,18 @@ class Box:
         :param box: the box to determine the zone compared to self
         :return: the zone of the box
         """
-        if box in self.ancestors:
-            return 'inside'
-        elif self in box.ancestors:
-            return 'a container'
+        (x1, y1), (x2, y2) = self.coordinates
+        (x3, y3), (x4, y4) = box.coordinates
+        x1, y1 = ((x1 + x2) / 2, (y1 + y2) / 2)
+        x2, y2 = ((x3 + x4) / 2, (y3 + y4) / 2)
+        if x1 <= x2 and y1 >= y2:
+            return 'northeast'
+        elif x1 >= x2 and y1 >= y2:
+            return 'northwest'
+        elif x1 >= x2 and y1 <= y2:
+            return 'southwest'
         else:
-            (x1, y1), (x2, y2) = self.coordinates
-            (x3, y3), (x4, y4) = box.coordinates
-            x1, y1 = ((x1 + x2) / 2, (y1 + y2) / 2)
-            x2, y2 = ((x3 + x4) / 2, (y3 + y4) / 2)
-            if x1 <= x2 and y1 >= y2:
-                return 'northeast'
-            elif x1 >= x2 and y1 >= y2:
-                return 'northwest'
-            elif x1 >= x2 and y1 <= y2:
-                return 'southwest'
-            else:
-                return 'southeast'
+            return 'southeast'
 
     def compute_dimensions(self):
         """
