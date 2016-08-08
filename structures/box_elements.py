@@ -135,6 +135,7 @@ class RootBox(Box):
                 target_index = l.index(transition)
                 w = x2 - x1
                 x = x2 - w / (target_counter + 1) - target_index * w / (target_counter + 1)
+                y = (y3 + y4) / 2
                 return [(x, y1), (x, y), (x3, y)]
             elif source.parent.axis == 'horizontal' and source.zone_of(target) == 'southwest':
                 l = generate_list('southwest')
@@ -145,6 +146,7 @@ class RootBox(Box):
                 target_index = l.index(transition)
                 w = x2 - x1
                 x = x1 + w / (target_counter + 1) + target_index * w / (target_counter + 1)
+                y = (y3 + y4) / 2
                 return [(x, y2), (x, y), (x4, y)]
             elif source.parent.axis == 'horizontal' and source.zone_of(target) == 'southeast':
                 l = generate_list('southeast')
@@ -236,10 +238,29 @@ class RootBox(Box):
                             transition.update_coordinates(start=(x, y1), end=(x, y4))
                         else:
                             transition.update_coordinates(start=(x, y2), end=(x, y3))
+                    elif source in target.ancestors:
+                        # inner transition
+                        if source.axis == 'horizontal':
+                            if target.parent.children.index(target) == 0:
+                                transition.update_coordinates(start=(x1, (y3 + y4) / 2), end=(x3, (y3 + y4) / 2))
+                            elif target.parent.childrent.index(target) == len(target.parent.children) - 1:
+                                transition.update_coordinates(start=(x2, (y3 + y4) / 2), end=(x4, (y3 + y4) / 2))
+                            elif source.zone_of(target) == 'northeast' or source.zone_of(target) == 'northwest':
+                                transition.update_coordinates(start=((x3 + x4) / 2, y1), end=((x3 + x4) / 2, y3))
+                            else:
+                                transition.update_coordinates(start=((x3 + x4) / 2, y2), end=((x3 + x4) / 2, y4))
+                        else:
+                            if target.parent.children.index(target) == 0:
+                                transition.update_coordinates(start=((x3 + x4) / 2, y1), end=((x3 + x4) / 2, y3))
+                            elif target.parent.childrent.index(target) == len(target.parent.children) - 1:
+                                transition.update_coordinates(start=((x3 + x4) / 2, y2), end=((x3 + x4) / 2, y4))
+                            elif source.zone_of(target) == 'northwest' or source.zone_of(target) == 'southwest':
+                                transition.update_coordinates(start=(x1, (y3 + y4) / 2), end=(x3, (y3 + y4) / 2))
+                            else:
+                                transition.update_coordinates(start=(x2, (y3 + y4) / 2), end=(x4, (y3 + y4) / 2))
                     else:
                         # classic arrow
                         transition.polyline = classic_arrow(transition)
-                        print(transition, transition.polyline)
             else:
                 if source.zone == 'north':
                     transition.polyline = [((x1 + x2) / 2, y1), ((x1 + x2) / 2, y1 - space),
