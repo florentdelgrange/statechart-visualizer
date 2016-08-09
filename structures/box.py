@@ -130,6 +130,80 @@ class Box:
                     h += space
         return coordinates
 
+    def move_to(self, direction, box):
+        """
+        move the box (self) following the direction of this box with the box in parameter
+        :param direction: direction of self with the box in parameter ; type : str
+        :param box: this box will not move : self will be moved following the direction of this box
+        """
+        # base case : self and box are brothers
+        if self == box:
+            return
+        if self in box.parent.children:
+            parent = box.parent
+            i_self = parent.children.index(self)
+            i_box = parent.children.index(box)
+            if direction == 'west of':
+                if len(parent.children) == 2:
+                    parent.axis = 'horizontal'
+                if parent.axis == 'horizontal' and i_self > i_box:
+                    parent._children = parent.children[:i_box] + [
+                        self] + parent.children[i_box:i_self] + parent.children[i_self + 1:]
+                elif parent.axis == 'vertical':
+                    parent.remove_child(self)
+                    parent.remove_child(box)
+                    container = ContainerBox('horizontal')
+                    container.add_child(self)
+                    container.add_child(box)
+                    parent.add_child(container, position=i_box)
+            elif direction == 'east of':
+                if len(parent.children) == 2:
+                    parent.axis = 'horizontal'
+                if parent.axis == 'horizontal' and i_self < i_box:
+                    parent._children = parent.children[:i_self] + parent.children[i_self + 1:i_box] + [
+                        box, self] + parent.children[i_box + 1:]
+                elif parent.axis == 'vertical':
+                    parent.remove_child(self)
+                    parent.remove_child(box)
+                    container = ContainerBox('horizontal')
+                    container.add_child(box)
+                    container.add_child(self)
+                    parent.add_child(container, position=i_box)
+            elif direction == 'north of':
+                if len(parent.children) == 2:
+                    parent.axis = 'vertical'
+                if parent.axis == 'vertical' and i_self > i_box:
+                    parent._children = parent.children[:i_box] + [
+                        self] + parent.children[i_box:i_self] + parent.children[i_self + 1:]
+                elif parent.axis == 'horizontal':
+                    parent.remove_child(self)
+                    parent.remove_child(box)
+                    container = ContainerBox('vertical')
+                    container.add_child(self)
+                    container.add_child(box)
+                    parent.add_child(container, position=i_box)
+            else:
+                if len(parent.children) == 2:
+                    parent.axis = 'vertical'
+                if parent.axis == 'vertical' and i_self < i_box:
+                    parent._children = parent.children[:i_self] + parent.children[i_self + 1:i_box] + [
+                        box, self] + parent.children[i_box + 1:]
+                elif parent.axis == 'horizontal':
+                    parent.remove_child(self)
+                    parent.remove_child(box)
+                    container = ContainerBox('vertical')
+                    container.add_child(box)
+                    container.add_child(self)
+                    parent.add_child(container, position=i_box)
+        else:
+            ancestors_box1 = [self] + self.ancestors
+            ancestors_box2 = [box] + box.ancestors
+            print(self.name, ancestors_box1)
+            print(box.name, ancestors_box2)
+            closest_common_ancestor = next(filter(lambda x: x in ancestors_box2, ancestors_box1))
+            ancestors_box1[ancestors_box1.index(closest_common_ancestor) - 1].move_to(direction, ancestors_box2[
+                ancestors_box2.index(closest_common_ancestor) - 1])
+
     @property
     def name(self):
         return self._name
@@ -146,12 +220,23 @@ class Box:
     def children(self):
         return self._children
 
-    def add_child(self, box, constraint=None):
-        if type(box) is Box:
-            self._children.append(box)
+    def add_child(self, box, position=-1, constraint=None):
+        if isinstance(box, Box):
+            if position != -1:
+                self._children = self.children[:position] + [box] + self.children[position:]
+            else:
+                self._children.append(box)
             box._parent = self
             return True
         return False
+
+    def remove_child(self, box):
+        if box in self.children:
+            self.children.remove(box)
+            box._parent = None
+            return True
+        else:
+            return False
 
     @property
     def transitions(self):
@@ -255,8 +340,24 @@ class Box:
     def has_self_transition(self):
         return next((True for t in self.transitions if t.target == self), False)
 
+    def __repr__(self):
+        return "State box : " + self.name
+
 
 def get_coordinates(box, coordinates):
     x1, y1 = coordinates[box]
     width, height = box.dimensions
     return (x1, y1), (x1 + width, y1 + height)
+
+
+class ContainerBox(Box):
+    def __init__(self, axis):
+        super().__init__('', axis=axis)
+        self._shape = "invisible"
+
+    @property
+    def header(self):
+        return 0
+
+    def __repr__(self):
+        return "ContainerBox : " + self.children.__str__()

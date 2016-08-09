@@ -21,9 +21,6 @@ def get_shape(box: Box, insert):
                                     stroke='black', stroke_width=1)
     elif box.shape == 'circle':
         return svgwrite.shapes.Circle(center=(x + radius, y + radius), r=radius)
-    else:
-        return svgwrite.shapes.Rect(insert=(x, y), size=(box.width, box.height),
-                                    fill="#044B94", fill_opacity="0.4")
 
 
 def render_box(box: Box, coordinates):
@@ -39,7 +36,8 @@ def render_box(box: Box, coordinates):
     # First draw the main box
     insert = coordinates[box]
     shape = get_shape(box, insert)
-    g.add(shape)
+    if shape is not None:
+        g.add(shape)
 
     # Now draw the name of the box
     w, h = box.name_position(insert)

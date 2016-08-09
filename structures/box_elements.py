@@ -14,6 +14,9 @@ class InitBox(Box):
     def dimensions(self):
         return radius * 2, radius * 2
 
+    def __repr__(self):
+        return "InitBox to " + self.transitions[0].target.name
+
 
 class RootBox(Box):
     def __init__(self, statechart):
@@ -64,7 +67,6 @@ class RootBox(Box):
         self.add_child(InitBox(root))
         self.add_child(root)
         self.entry = statechart.preamble
-        update_transitions_coordinates(self.transitions, self.get_coordinates())
 
     @property
     def transitions(self):
@@ -80,8 +82,16 @@ class RootBox(Box):
             return transitions + t
 
         transitions = find_transitions(self)
+        update_transitions_coordinates(transitions, self.get_coordinates())
         return transitions
 
     @property
     def zone(self):
         return 'all'
+
+    @property
+    def inner_states(self):
+        return self._inner_states
+
+    def __repr__(self):
+        return "Root Box: " + self.name
