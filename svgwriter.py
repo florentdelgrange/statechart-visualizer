@@ -60,7 +60,14 @@ def render_box(box: Box, coordinates):
                                      textLength=len(entry) * char_width))
             i += 1
 
-    # TODO: exit zone
+    w, h = box.exit_position(insert)
+    if box.exit != '':
+        g.add(svgwrite.text.Text("exit / ", insert=(w, h), style=italic_style, textLength=8 * char_width))
+        i = 0
+        for exit in box.exit.split('\n'):
+            g.add(svgwrite.text.Text(exit, insert=(w + 9 * char_width, h + char_height * i), style=normal_style,
+                                     textLength=len(exit) * char_width))
+            i += 1
     # TODO : do zone
 
     # Finally draw the children following the axis (horizontal or vertical)

@@ -41,8 +41,8 @@ class RootBox(Box):
             entry, exit = None, None
             if state.on_entry is not None:
                 entry = state.on_entry
-                print(entry)
-            if state.on_exit is not None: exit = state.on_exit
+            if state.on_exit is not None:
+                exit = state.on_exit
 
             # now check the transitions
             transitions = statechart.transitions_from(state.name)

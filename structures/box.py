@@ -44,9 +44,13 @@ class Box:
             entry_len = max(map(lambda x: (8 + len(x)) * char_width, self._entry.split('\n')))
         else:
             entry_len = 0
+        if self.exit != '':
+            exit_len = max(map(lambda x: (8 + len(x)) * char_width, self._exit.split('\n')))
+        else:
+            exit_len = 0
         if self.axis == 'horizontal':
             width = max(sum(map(lambda x: x.width + space, self.children)) + space,
-                        space + p_len + char_width * len(self.name) + space, 2 * space + entry_len)
+                        space + p_len + char_width * len(self.name) + space, 2 * space + entry_len + exit_len)
             height = max(list(map(lambda x: x.height, self.children)) or [0]) + self.header + 2 * space
             # self transitions
             width += sum(map(lambda x: space, filter(lambda child: child.has_self_transition, self.children)))
@@ -58,7 +62,7 @@ class Box:
                            0)
         else:
             width = max(max(list(map(lambda x: x.width, self.children)) or [0]) + 2 * space,
-                        space + p_len + char_width * len(self.name) + space, 2 * space + entry_len)
+                        space + p_len + char_width * len(self.name) + space, 2 * space + entry_len + exit_len)
             height = sum(map(lambda x: x.height + space, self.children)) + self.header
             # self transitions
             width += next(map(lambda x: space,
@@ -93,6 +97,16 @@ class Box:
         if self._entry != '':
             w = insert[0] + space
             h += space + char_height
+        return w, h
+
+    def exit_position(self, insert=(0, 0)):
+        """
+        gives the coordinates of the exit zone insert position
+        """
+        w, h = self.entry_position(insert)
+        if self._exit != '':
+            w = insert[0] + space
+            h += len(self.entry.split('\n')) * char_height
         return w, h
 
     def get_coordinates(self, insert=(0, 0)):
@@ -259,7 +273,7 @@ class Box:
     def exit(self):
         return self._exit
 
-    @entry.setter
+    @exit.setter
     def exit(self, exit):
         if type(exit) is str:
             self._exit = exit
@@ -291,7 +305,10 @@ class Box:
         """
         h = 2 * space + char_height
         if self._entry != '':
-            n = self._entry.count('\n')
+            n = len(self._entry.split('\n'))
+            h += space + n * char_height
+        if self._exit != '':
+            n = len(self._exit.split('\n'))
             h += space + n * char_height
         return h
 
