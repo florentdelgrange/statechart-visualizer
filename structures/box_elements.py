@@ -39,7 +39,9 @@ class RootBox(Box):
                 children = [InitBox(root_state), root_state] + list(filter(lambda x: x is not root_state, children))
 
             entry, exit = None, None
-            if state.on_entry is not None: entry = state.on_entry
+            if state.on_entry is not None:
+                entry = state.on_entry
+                print(entry)
             if state.on_exit is not None: exit = state.on_exit
 
             # now check the transitions

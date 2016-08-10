@@ -41,7 +41,7 @@ class Box:
         else:
             p_len = 0
         if self.entry != '':
-            entry_len = (8 + len(self._entry)) * char_width
+            entry_len = max(map(lambda x: (8 + len(x)) * char_width, self._entry.split('\n')))
         else:
             entry_len = 0
         if self.axis == 'horizontal':
@@ -155,7 +155,7 @@ class Box:
                     container = ContainerBox('horizontal')
                     container.add_child(self)
                     container.add_child(box)
-                    parent.add_child(container, position=i_box)
+                    parent.add_child(container, index=i_box)
             elif direction == 'east of':
                 if len(parent.children) == 2:
                     parent.axis = 'horizontal'
@@ -168,7 +168,7 @@ class Box:
                     container = ContainerBox('horizontal')
                     container.add_child(box)
                     container.add_child(self)
-                    parent.add_child(container, position=i_box)
+                    parent.add_child(container, index=i_box)
             elif direction == 'north of':
                 if len(parent.children) == 2:
                     parent.axis = 'vertical'
@@ -181,7 +181,7 @@ class Box:
                     container = ContainerBox('vertical')
                     container.add_child(self)
                     container.add_child(box)
-                    parent.add_child(container, position=i_box)
+                    parent.add_child(container, index=i_box)
             else:
                 if len(parent.children) == 2:
                     parent.axis = 'vertical'
@@ -194,12 +194,10 @@ class Box:
                     container = ContainerBox('vertical')
                     container.add_child(box)
                     container.add_child(self)
-                    parent.add_child(container, position=i_box)
+                    parent.add_child(container, index=i_box)
         else:
             ancestors_box1 = [self] + self.ancestors
             ancestors_box2 = [box] + box.ancestors
-            print(self.name, ancestors_box1)
-            print(box.name, ancestors_box2)
             closest_common_ancestor = next(filter(lambda x: x in ancestors_box2, ancestors_box1))
             ancestors_box1[ancestors_box1.index(closest_common_ancestor) - 1].move_to(direction, ancestors_box2[
                 ancestors_box2.index(closest_common_ancestor) - 1])
@@ -220,10 +218,10 @@ class Box:
     def children(self):
         return self._children
 
-    def add_child(self, box, position=-1, constraint=None):
+    def add_child(self, box, index=-1, constraint=None):
         if isinstance(box, Box):
-            if position != -1:
-                self._children = self.children[:position] + [box] + self.children[position:]
+            if index != -1:
+                self._children = self.children[:index] + [box] + self.children[index:]
             else:
                 self._children.append(box)
             box._parent = self
@@ -293,7 +291,8 @@ class Box:
         """
         h = 2 * space + char_height
         if self._entry != '':
-            h += space + char_height
+            n = self._entry.count('\n')
+            h += space + n * char_height
         return h
 
     @property
