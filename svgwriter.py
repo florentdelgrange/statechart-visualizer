@@ -16,9 +16,9 @@ def get_shape(box: Box, insert):
     """
     x, y = insert
     if box.shape == 'rectangle':
-        return svgwrite.shapes.Rect(insert=(x, y), size=(box.width, box.height),
+        return svgwrite.shapes.Rect(insert=(x, y), rx=15, ry=15, size=(box.width, box.height),
                                     fill=svgwrite.rgb(135, 206, 235),
-                                    stroke='black', stroke_width=1)
+                                    stroke='black', stroke_width=2)
     elif box.shape == 'circle':
         return svgwrite.shapes.Circle(center=(x + radius, y + radius), r=radius)
 
