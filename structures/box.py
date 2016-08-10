@@ -150,7 +150,19 @@ class Box:
         :param direction: direction of self with the box in parameter ; type : str
         :param box: this box will not move : self will be moved following the direction of this box
         """
+
         # base case : self and box are brothers
+        def smooth(box):
+            print(box.axis, box.children)
+            for i in range(len(box.children)):
+                child = box.children[i]
+                if isinstance(child, GroupBox) and child.axis == box.axis:
+                    print('sommothie avec ', child)
+                    box.remove_child(child)
+                    for j in range(len(child.children)):
+                        new_child = child.children[j]
+                        box.add_child(new_child, i + j)
+
         if self == box:
             return
         if self in box.parent.children:
@@ -166,7 +178,7 @@ class Box:
                 elif parent.axis == 'vertical':
                     parent.remove_child(self)
                     parent.remove_child(box)
-                    container = ContainerBox('horizontal')
+                    container = GroupBox('horizontal')
                     container.add_child(self)
                     container.add_child(box)
                     parent.add_child(container, index=i_box)
@@ -179,7 +191,7 @@ class Box:
                 elif parent.axis == 'vertical':
                     parent.remove_child(self)
                     parent.remove_child(box)
-                    container = ContainerBox('horizontal')
+                    container = GroupBox('horizontal')
                     container.add_child(box)
                     container.add_child(self)
                     parent.add_child(container, index=i_box)
@@ -192,7 +204,7 @@ class Box:
                 elif parent.axis == 'horizontal':
                     parent.remove_child(self)
                     parent.remove_child(box)
-                    container = ContainerBox('vertical')
+                    container = GroupBox('vertical')
                     container.add_child(self)
                     container.add_child(box)
                     parent.add_child(container, index=i_box)
@@ -205,16 +217,17 @@ class Box:
                 elif parent.axis == 'horizontal':
                     parent.remove_child(self)
                     parent.remove_child(box)
-                    container = ContainerBox('vertical')
+                    container = GroupBox('vertical')
                     container.add_child(box)
                     container.add_child(self)
                     parent.add_child(container, index=i_box)
+            smooth(closest_common_ancestor(self, box))
         else:
             ancestors_box1 = [self] + self.ancestors
             ancestors_box2 = [box] + box.ancestors
-            closest_common_ancestor = next(filter(lambda x: x in ancestors_box2, ancestors_box1))
-            ancestors_box1[ancestors_box1.index(closest_common_ancestor) - 1].move_to(direction, ancestors_box2[
-                ancestors_box2.index(closest_common_ancestor) - 1])
+            parent = next(filter(lambda x: x in ancestors_box2, ancestors_box1))
+            ancestors_box1[ancestors_box1.index(parent) - 1].move_to(direction, ancestors_box2[
+                ancestors_box2.index(parent) - 1])
 
     @property
     def name(self):
@@ -366,7 +379,13 @@ def get_coordinates(box, coordinates):
     return (x1, y1), (x1 + width, y1 + height)
 
 
-class ContainerBox(Box):
+def closest_common_ancestor(box1, box2):
+    ancestors_box1 = [box1] + box1.ancestors
+    ancestors_box2 = [box2] + box2.ancestors
+    return next(filter(lambda x: x in ancestors_box2, ancestors_box1))
+
+
+class GroupBox(Box):
     def __init__(self, axis):
         super().__init__('', axis=axis)
         self._shape = "invisible"
@@ -409,4 +428,4 @@ class ContainerBox(Box):
         return 0
 
     def __repr__(self):
-        return "ContainerBox : " + self.children.__str__()
+        return "GroupBox : " + self.children.__str__()
