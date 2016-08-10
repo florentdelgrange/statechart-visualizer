@@ -211,7 +211,9 @@ def update_transitions_coordinates(transitions, coordinates):
             same_target_index = generate_list().index(transition)
             direction = zone_of(source, target, coordinates)
             acc = acceptance_zone(source, target, 'horizontal', coordinates)
+            # check if it is possible to join directly the target with one line
             if acc is not None:
+                transition.polyline = []
                 h = acc[1] - acc[0]
                 y = acc[0] + h / (same_target_counter + 1) + same_target_index * h / (same_target_counter + 1)
                 if direction == 'southwest' or direction == 'northwest':
@@ -222,6 +224,7 @@ def update_transitions_coordinates(transitions, coordinates):
             else:
                 acc = acceptance_zone(source, target, 'vertical', coordinates)
                 if acc is not None:
+                    transition.polyline = []
                     w = acc[1] - acc[0]
                     x = acc[0] + w / (same_target_counter + 1) + same_target_index * w / (same_target_counter + 1)
                     if direction == 'northeast' or direction == 'northwest':
@@ -230,6 +233,7 @@ def update_transitions_coordinates(transitions, coordinates):
                         transition.update_coordinates(start=(x, y2), end=(x, y3))
                 elif source in target.ancestors:
                     # inner transition
+                    transition.polyline = []
                     if source.axis == 'horizontal':
                         if target.parent.children.index(target) == 0:
                             transition.update_coordinates(start=(x1, (y3 + y4) / 2), end=(x3, (y3 + y4) / 2))
