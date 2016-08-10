@@ -372,6 +372,39 @@ class ContainerBox(Box):
         self._shape = "invisible"
 
     @property
+    def dimensions(self):
+        width, height = super().dimensions
+        return width - 2 * space, height - 2 * space
+
+    def get_coordinates(self, insert=(0, 0)):
+        x, y = insert
+        coordinates = {self: insert}
+
+        if self._axis == 'horizontal':
+            w = x
+            h = y + (self.height + self.header) / 2
+            for child in self.children:
+                if child.has_self_transition and child.zone == 'west':
+                    w += space
+                coordinates.update(child.get_coordinates(insert=(w, h - child.height / 2)))
+                w += child.width
+                if child.has_self_transition and child.zone == 'east':
+                    w += space
+                w += space
+        else:
+            w = x + self.width / 2
+            h = y + self.header - space
+            for child in self.children:
+                if child.has_self_transition and child.zone == 'north':
+                    h += space
+                coordinates.update(child.get_coordinates(insert=(w - child.width / 2, h)))
+                h += child.height
+                if child.has_self_transition and child.zone == 'south':
+                    h += space
+                h += space
+        return coordinates
+
+    @property
     def header(self):
         return 0
 
