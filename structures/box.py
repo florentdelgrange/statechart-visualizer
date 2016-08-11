@@ -121,7 +121,6 @@ class Box:
         :param insert: (optional) the insert of the box - initially (0,0)
         :return: the dictionary linking the boxes with their insert
         """
-        x, y = insert
         coordinates = constraint_solver.resolve(self, self.children, self._constraints, insert)
         for child in self.children:
             x1, y1 = coordinates[child]
@@ -382,7 +381,7 @@ def get_coordinates(box, coordinates):
 def closest_common_ancestor(box1, box2):
     ancestors_box1 = [box1] + box1.ancestors
     ancestors_box2 = [box2] + box2.ancestors
-    return next(filter(lambda x: x in ancestors_box2, ancestors_box1)),
+    return next(filter(lambda x: x in ancestors_box2, ancestors_box1))
 
 
 class GroupBox(Box):
