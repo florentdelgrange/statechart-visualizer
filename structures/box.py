@@ -1,3 +1,4 @@
+import constraint_solver
 from constraint_solver import Constraint
 
 char_width, char_height, space, radius = 10, 20, 20, 20
@@ -121,30 +122,10 @@ class Box:
         :return: the dictionary linking the boxes with their insert
         """
         x, y = insert
-        coordinates = {self: insert}
-
-        if self._axis == 'horizontal':
-            w = x
-            h = y + (self.height + self.header) / 2
-            for child in self.children:
-                w += space
-                if child.has_self_transition and child.zone == 'west':
-                    w += space
-                coordinates.update(child.get_coordinates(insert=(w, h - child.height / 2)))
-                w += child.width
-                if child.has_self_transition and child.zone == 'east':
-                    w += space
-        else:
-            w = x + self.width / 2
-            h = y + self.header - space
-            for child in self.children:
-                h += space
-                if child.has_self_transition and child.zone == 'north':
-                    h += space
-                coordinates.update(child.get_coordinates(insert=(w - child.width / 2, h)))
-                h += child.height
-                if child.has_self_transition and child.zone == 'south':
-                    h += space
+        coordinates = constraint_solver.resolve(self, self.children, self._constraints, insert)
+        for child in self.children:
+            x1, y1 = coordinates[child]
+            coordinates.update(child.get_coordinates((x1, y1)))
         return coordinates
 
     def move_to(self, direction, box):
@@ -156,11 +137,9 @@ class Box:
 
         # base case : self and box are brothers
         def smooth(box):
-            print(box.axis, box.children)
             for i in range(len(box.children)):
                 child = box.children[i]
                 if isinstance(child, GroupBox) and child.axis == box.axis:
-                    print('sommothie avec ', child)
                     box.remove_child(child)
                     for j in range(len(child.children)):
                         new_child = child.children[j]

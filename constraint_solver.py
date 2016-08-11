@@ -21,12 +21,16 @@ class Constraint:
     def direction(self):
         return self._direction
 
+    def __repr__(self):
+        return self.box1.__repr__() + ' ' + self.direction + ' ' + self.box2.__repr__()
+
 
 class BoxWithConstraints:
     def __init__(self, box):
         self._box = box
         self._x = Variable(box.name + ' x', 0)
         self._y = Variable(box.name + ' y', 0)
+        self._width, self._height = box.dimensions
 
         def additional_space():
             x1, y1, x2, y2 = 0, 0, 0, 0
@@ -55,26 +59,29 @@ class BoxWithConstraints:
 
     @property
     def width(self):
-        self.box.width
+        return self._width
 
     @property
     def height(self):
-        self.box.height
+        return self._height
 
     @property
     def space(self):
         return self._space
 
+    def __repr__(self):
+        return 'decorator<' + self.box.__repr__() + '>'
+
 
 def resolve(parent, children, constraint_list, insert=(0, 0)):
     x, y = insert
-    boxes = map(lambda child: BoxWithConstraints(child), children)
-    constraints = map(lambda constraint: Constraint(next(filter(lambda x: x.box == constraint.box1, boxes),
-                                                         BoxWithConstraints(constraint.box1)),
-                                                    constraint.direction,
-                                                    next(filter(lambda x: x.box == constraint.box2, boxes),
-                                                         BoxWithConstraints(constraint.box2))),
-                      constraint_list)
+    boxes = list(map(lambda child: BoxWithConstraints(child), children))
+    constraints = list(map(lambda constraint: Constraint(next(filter(lambda x: x.box == constraint.box1, boxes),
+                                                              BoxWithConstraints(constraint.box1)),
+                                                         constraint.direction,
+                                                         next(filter(lambda x: x.box == constraint.box2, boxes),
+                                                              BoxWithConstraints(constraint.box2))),
+                           constraint_list))
 
     def add_constraint(solver, constraint):
         box1 = constraint.box1
@@ -120,7 +127,9 @@ def resolve(parent, children, constraint_list, insert=(0, 0)):
     for constraint in constraints:
         add_constraint(solver, constraint)
 
-    coordinates = {}
+    print(parent, left_limit, top_limit, right_limit, bot_limit)
+    coordinates = {parent: insert}
     for box in boxes:
+        print(box.x, box.y)
         coordinates[box.box] = (box.x.value, box.y.value)
     return coordinates

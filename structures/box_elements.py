@@ -7,7 +7,6 @@ class InitBox(Box):
     def __init__(self, root_state):
         super().__init__(name='', axis=None)
         self._transitions = [Transition(source=self, target=root_state)]
-        self._width, self._height = self.dimensions
         self._shape = 'circle'
 
     @property
