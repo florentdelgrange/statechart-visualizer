@@ -1,3 +1,5 @@
+from constraint_solver import Constraint
+
 char_width, char_height, space, radius = 10, 20, 20, 20
 
 
@@ -19,6 +21,7 @@ class Box:
         self._exit = ''  # type: str
         self._parent = None  # type: Box
         self._shape = 'rectangle'
+        self._constraints = []
 
     @property
     def dimensions(self):
@@ -229,6 +232,22 @@ class Box:
             ancestors_box1[ancestors_box1.index(parent) - 1].move_to(direction, ancestors_box2[
                 ancestors_box2.index(parent) - 1])
 
+    def add_constraint(self, constraint):
+        """
+        Add the constraint in the right Box.
+        If the parent of the two Boxes of the constraint is self, the constraint is added to self.
+        Otherwise, find the common ancestor and add the constraint in this box.
+        """
+        if constraint.box1.parent == constraint.box2.parent == self:
+            self._constraints += [constraint]
+        else:
+            ancestors_box1 = [constraint.box1] + constraint.box1.ancestors
+            ancestors_box2 = [constraint.box2] + constraint.box2.ancestors
+            closest_ancestor = next(filter(lambda x: x in ancestors_box2, ancestors_box1))
+            box1 = ancestors_box1[ancestors_box1.index(closest_ancestor) - 1]
+            box2 = ancestors_box2[ancestors_box2.index(closest_ancestor) - 1]
+            closest_ancestor.add_constraint(Constraint(box1, constraint.direction, box2))
+
     @property
     def name(self):
         return self._name
@@ -252,6 +271,8 @@ class Box:
             else:
                 self._children.append(box)
             box._parent = self
+            if constraint is not None:
+                self.add_constraint(constraint)
             return True
         return False
 
@@ -382,7 +403,7 @@ def get_coordinates(box, coordinates):
 def closest_common_ancestor(box1, box2):
     ancestors_box1 = [box1] + box1.ancestors
     ancestors_box2 = [box2] + box2.ancestors
-    return next(filter(lambda x: x in ancestors_box2, ancestors_box1))
+    return next(filter(lambda x: x in ancestors_box2, ancestors_box1)),
 
 
 class GroupBox(Box):
