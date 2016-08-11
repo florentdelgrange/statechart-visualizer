@@ -35,7 +35,7 @@ class BoxWithConstraints:
         def additional_space():
             x1, y1, x2, y2 = 0, 0, 0, 0
             if self.box.has_self_transition:
-                if self.box.zone == 'north' or 'west':
+                if self.box.zone == 'north' or self.box.zone == 'west':
                     x1 += space
                     y1 += space
                 else:
@@ -119,6 +119,8 @@ def resolve(parent, children, constraint_list, insert=(0, 0)):
         solver.add_constraint(b1.y + b1.height + y2 + space < bot_limit)
         for b2 in boxes[i + 1:]:
             x3, y3, x4, y4 = b2.space
+            print(b1, x1, y1, x2, y2, b1.box.zone)
+            print(b2, x3, y3, x4, y4, b2.box.zone)
             if parent.axis == 'horizontal':
                 solver.add_constraint(b2.x > b1.x + b1.width + space + x2 + x3, strength=WEAK)
             else:
@@ -127,9 +129,7 @@ def resolve(parent, children, constraint_list, insert=(0, 0)):
     for constraint in constraints:
         add_constraint(solver, constraint)
 
-    print(parent, left_limit, top_limit, right_limit, bot_limit)
     coordinates = {parent: insert}
     for box in boxes:
-        print(box.x, box.y)
         coordinates[box.box] = (box.x.value, box.y.value)
     return coordinates
