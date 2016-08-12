@@ -260,7 +260,7 @@ class Box:
                 self._children.append(box)
             box._parent = self
             if constraint is not None:
-                constraint = Constraint(self, constraint[0], constraint[1])
+                constraint = Constraint(box, constraint[0], constraint[1])
                 self.add_constraint(constraint)
             return True
         return False
