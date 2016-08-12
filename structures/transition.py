@@ -1,5 +1,5 @@
 import math
-from structures.box import space, get_coordinates
+from structures.box import space
 
 
 class Transition:
@@ -15,7 +15,7 @@ class Transition:
     @property
     def coordinates(self):
         if self.polyline:
-            return self.polyline[0], self.polyline[len(self.polyline) - 1]
+            return self.polyline[0], self.polyline[-1]
         else:
             return (self._x1, self._y1), (self._x2, self._y2)
 
@@ -43,8 +43,8 @@ def zone_of(box1, box2, coordinates):
     :param coordinates: the coordinates dictionary Dict[Box: (int, int)]
     :return: the area of box number 2 relative to the box number 1
     """
-    (x1, y1), (x2, y2) = get_coordinates(box1, coordinates)
-    (x3, y3), (x4, y4) = get_coordinates(box2, coordinates)
+    x1, y1, x2, y2 = coordinates[box1]
+    x3, y3, x4, y4 = coordinates[box2]
     x1, y1 = ((x1 + x2) / 2, (y1 + y2) / 2)
     x2, y2 = ((x3 + x4) / 2, (y3 + y4) / 2)
     if x1 <= x2 and y1 >= y2:
@@ -62,14 +62,14 @@ def acceptance_zone(box1, box2, axis, coordinates):
     Check and compute if it is possible to draw a transition directly to another box
     with just one line
     """
-    box1_coordinates = get_coordinates(box1, coordinates)
-    box2_coordinates = get_coordinates(box2, coordinates)
+    box1_coordinates = coordinates[box1]
+    box2_coordinates = coordinates[box2]
     if axis == 'horizontal':
-        x1, x2 = box1_coordinates[0][1], box1_coordinates[1][1]
-        x3, x4 = box2_coordinates[0][1], box2_coordinates[1][1]
+        x1, x2 = box1_coordinates[1], box1_coordinates[3]
+        x3, x4 = box2_coordinates[1], box2_coordinates[3]
     else:
-        x1, x2 = box1_coordinates[0][0], box1_coordinates[1][0]
-        x3, x4 = box2_coordinates[0][0], box2_coordinates[1][0]
+        x1, x2 = box1_coordinates[0], box1_coordinates[2]
+        x3, x4 = box2_coordinates[0], box2_coordinates[2]
     if x1 < x2 and x3 < x4:
         x = [x1, x2, x3, x4]
         x.remove(min(x))
@@ -89,18 +89,18 @@ def classic_arrow(transition, coordinates):
     """
     source = transition.source
     target = transition.target
-    (x1, y1), (x2, y2) = get_coordinates(source, coordinates)
-    (x3, y3), (x4, y4) = get_coordinates(target, coordinates)
+    x1, y1, x2, y2 = coordinates[source]
+    x3, y3, x4, y4 = coordinates[target]
 
     generate_list = lambda zone: list(
         filter(lambda t: zone_of(source, t.target, coordinates) == zone, source.transitions))
 
     if source.parent.axis == 'horizontal' and zone_of(source, target, coordinates) == 'northwest':
         l = generate_list('northwest')
-        l.sort(key=lambda t: math.sqrt((x1 - get_coordinates(t.target, coordinates)[1][0]) ** 2 +
+        l.sort(key=lambda t: math.sqrt((x1 - coordinates[t.target][2]) ** 2 +
                                        (y1 - (
-                                           get_coordinates(t.target, coordinates)[1][1] +
-                                           get_coordinates(t.target, coordinates)[0][1]) / 2) ** 2))
+                                           coordinates[t.target][3] +
+                                           coordinates[t.target][1]) / 2) ** 2))
         target_counter = len(l)
         target_index = l.index(transition)
         w = x2 - x1
@@ -109,10 +109,10 @@ def classic_arrow(transition, coordinates):
         return [(x, y1), (x, y), (x4, y)]
     elif source.parent.axis == 'horizontal' and zone_of(source, target, coordinates) == 'northeast':
         l = generate_list('northeast')
-        l.sort(key=lambda t: math.sqrt((x2 - get_coordinates(t.target, coordinates)[0][0]) ** 2 +
+        l.sort(key=lambda t: math.sqrt((x2 - coordinates[t.target][0]) ** 2 +
                                        (y1 - (
-                                           get_coordinates(t.target, coordinates)[1][1] +
-                                           get_coordinates(t.target, coordinates)[0][1]) / 2) ** 2))
+                                           coordinates[t.target][3] +
+                                           coordinates[t.target][1]) / 2) ** 2))
         target_counter = len(l)
         target_index = l.index(transition)
         w = x2 - x1
@@ -121,10 +121,10 @@ def classic_arrow(transition, coordinates):
         return [(x, y1), (x, y), (x3, y)]
     elif source.parent.axis == 'horizontal' and zone_of(source, target, coordinates) == 'southwest':
         l = generate_list('southwest')
-        l.sort(key=lambda t: math.sqrt((x1 - get_coordinates(t.target, coordinates)[1][0]) ** 2 +
+        l.sort(key=lambda t: math.sqrt((x1 - coordinates[t.target][2]) ** 2 +
                                        (y2 - (
-                                           get_coordinates(t.target, coordinates)[1][1] +
-                                           get_coordinates(t.target, coordinates)[0][1]) / 2) ** 2))
+                                           coordinates[t.target][3] +
+                                           coordinates[t.target][1]) / 2) ** 2))
         target_counter = len(l)
         target_index = l.index(transition)
         w = x2 - x1
@@ -133,10 +133,10 @@ def classic_arrow(transition, coordinates):
         return [(x, y2), (x, y), (x4, y)]
     elif source.parent.axis == 'horizontal' and zone_of(source, target, coordinates) == 'southeast':
         l = generate_list('southeast')
-        l.sort(key=lambda t: math.sqrt((x2 - get_coordinates(t.target, coordinates)[0][0]) ** 2 +
+        l.sort(key=lambda t: math.sqrt((x2 - coordinates[t.target][0]) ** 2 +
                                        (y2 - (
-                                           get_coordinates(t.target, coordinates)[1][1] +
-                                           get_coordinates(t.target, coordinates)[0][1]) / 2) ** 2))
+                                           coordinates[t.target][3] +
+                                           coordinates[t.target][1]) / 2) ** 2))
         target_counter = len(l)
         target_index = l.index(transition)
         w = x2 - x1
@@ -147,8 +147,8 @@ def classic_arrow(transition, coordinates):
         l = generate_list('northwest')
         l.sort(
             key=lambda t: math.sqrt((x1 - (
-                get_coordinates(t.target, coordinates)[0][0] + get_coordinates(t.target, coordinates)[1][0]) / 2) ** 2 +
-                                    (y1 - get_coordinates(t.target, coordinates)[1][1]) ** 2))
+                coordinates[t.target][0] + coordinates[t.target][2]) / 2) ** 2 +
+                                    (y1 - coordinates[t.target][3]) ** 2))
         target_counter = len(l)
         target_index = l.index(transition)
         h = y2 - y1
@@ -159,8 +159,8 @@ def classic_arrow(transition, coordinates):
         l = generate_list('northeast')
         l.sort(
             key=lambda t: math.sqrt((x2 - (
-                get_coordinates(t.target, coordinates)[0][0] + get_coordinates(t.target, coordinates)[1][0]) / 2) ** 2 +
-                                    (y1 - get_coordinates(t.target, coordinates)[1][1]) ** 2))
+                coordinates[t.target][0] + coordinates[t.target][2]) / 2) ** 2 +
+                                    (y1 - coordinates[t.target][3]) ** 2))
         target_counter = len(l)
         target_index = l.index(transition)
         h = y2 - y1
@@ -171,8 +171,8 @@ def classic_arrow(transition, coordinates):
         l = generate_list('southwest')
         l.sort(
             key=lambda t: math.sqrt((x1 - (
-                get_coordinates(t.target, coordinates)[0][0] + get_coordinates(t.target, coordinates)[1][0]) / 2) ** 2 +
-                                    (y2 - get_coordinates(t.target, coordinates)[0][1]) ** 2))
+                coordinates[t.target][0] + coordinates[t.target][2]) / 2) ** 2 +
+                                    (y2 - coordinates[t.target][1]) ** 2))
         target_counter = len(l)
         target_index = l.index(transition)
         h = y2 - y1
@@ -183,8 +183,8 @@ def classic_arrow(transition, coordinates):
         l = generate_list('southeast')
         l.sort(
             key=lambda t: math.sqrt((x2 - (
-                get_coordinates(t.target, coordinates)[0][0] + get_coordinates(t.target, coordinates)[1][0]) / 2) ** 2 +
-                                    (y2 - get_coordinates(t.target, coordinates)[0][1]) ** 2))
+                coordinates[t.target][0] + coordinates[t.target][2]) / 2) ** 2 +
+                                    (y2 - coordinates[t.target][1]) ** 2))
         target_counter = len(l)
         target_index = l.index(transition)
         h = y2 - y1
@@ -198,8 +198,8 @@ def update_transitions_coordinates(transitions, coordinates):
         # First check if it is possible to draw directly a transition in with one line.
         source = transition.source
         target = transition.target
-        (x1, y1), (x2, y2) = get_coordinates(source, coordinates)
-        (x3, y3), (x4, y4) = get_coordinates(target, coordinates)
+        x1, y1, x2, y2 = coordinates[source]
+        x3, y3, x4, y4 = coordinates[target]
         if source != target:
             def generate_list():
                 l = list(filter(lambda t: t.target == target, source.transitions)) + list(

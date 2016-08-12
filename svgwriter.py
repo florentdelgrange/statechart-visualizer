@@ -100,7 +100,6 @@ def export(box: Box):
     """
     dwg = svgwrite.Drawing(box.name + ".svg", size=(box.width, box.height))
     dwg.add(render_box(box, box.coordinates))
-    print(box.coordinates)
     marker = svgwrite.container.Marker(insert=(8, 3), orient='auto', markerWidth=30, markerHeight=20,
                                        id="arrow")
     path = svgwrite.path.Path(d="M0,0 L0,6 L9,3 z")

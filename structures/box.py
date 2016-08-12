@@ -92,6 +92,7 @@ class Box:
         whose key is a box and the value is the insert of the Box.
 
         :return: the dictionary linking the boxes with their insert
+            format : {Box : (x1, y1, x2, y2)} where insert=(x1, y1) and end=(x2, y2)
         """
         if not self.children:
             return {self: (0, 0, self.width, self.height)}
@@ -106,7 +107,7 @@ class Box:
                 x1, y1, x2, y2 = new_coordinates[box1]
                 for child in box2.children:
                     x3, y3, x4, y4 = coordinates[child]
-                    new_coordinates[child] = (x1 + x3, y1 + y3, x1 + y2, x2 + y4)
+                    new_coordinates[child] = (x1 + x3, y1 + y3, x1 + x4, y1 + y4)
                     update_coordinates(box, child)
 
             for box in self.children:
