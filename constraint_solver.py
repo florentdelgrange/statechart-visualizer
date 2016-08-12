@@ -153,7 +153,9 @@ def resolve(parent, dimensions, children, constraint_list):
     for constraint in constraints:
         add_constraint(solver, constraint)
 
-    new_coordinates = {parent: (0, 0, right_limit.value, bot_limit.value)}
+    width, height = max(map(lambda box: box.x.value + box.width + box.space[2] + space, boxes)), \
+                    max(map(lambda box: box.y.value + box.height + box.space[3] + space, boxes))
+    new_coordinates = {parent: (0, 0, width, height)}
     for box in boxes:
         new_coordinates[box.box] = (box.x.value, box.y.value, box.x.value + box.width, box.y.value + box.height)
     return new_coordinates
