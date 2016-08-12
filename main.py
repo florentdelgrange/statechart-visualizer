@@ -20,6 +20,7 @@ except IOError:
 atexit.register(readline.write_history_file, histfile)
 del os, histfile, readline, rlcompleter
 
+# example of use : python main.py tests/elevator.yaml
 file_name = sys.argv[1]
 
 # load the yaml file in arg

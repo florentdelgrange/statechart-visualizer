@@ -30,12 +30,12 @@ class BoxWithConstraints:
     """
     Box decorator for the resolution of constraints
     """
-    def __init__(self, box, coordinates):
-        x1, y1, x2, y2 = coordinates[box]
+
+    def __init__(self, box, dimensions):
         self._box = box
-        self._x = Variable(box.name + ' x', x1)
-        self._y = Variable(box.name + ' y', y1)
-        self._width, self._height = x2 - x1, y2 - y1
+        self._x = Variable(box.name + ' x', 0)
+        self._y = Variable(box.name + ' y', 0)
+        self._width, self._height = dimensions[box]
 
         def additional_space():
             x1, y1, x2, y2 = 0, 0, 0, 0
@@ -78,11 +78,11 @@ class BoxWithConstraints:
         return 'decorator<' + self.box.__repr__() + '>'
 
 
-def resolve(parent, coordinates, children, constraint_list):
+def resolve(parent, dimensions, children, constraint_list):
     """
     Resolve a coordinates problem. The coordinates of the children entered in parameter will be computed.
     :param parent: the main box that contains the children entered in parameter
-    :param coordinates: the dict of children's boxes coordinates (can be obtained by child.coordinates)
+    :param dimensions: the dict of children's dimensions
     :param children: the children to dispose in the parent's box
     :param constraint_list: the list of constraints
     :return: the dict that contains the coordinates of the children in parameter
@@ -90,22 +90,22 @@ def resolve(parent, coordinates, children, constraint_list):
 
     if parent.orthogonal_state:
         if parent.axis == 'horizontal':
-            height = max(map(lambda child: coordinates[child][3] - coordinates[child][1], parent.children))
+            height = max(map(lambda child: dimensions[child][1], parent.children))
             for child in parent.children:
-                x1, y1, x2, y2 = coordinates[child]
-                coordinates[child] = (x1, y1, x2, y1 + height)
+                w, h = dimensions[child]
+                dimensions[child] = (w, height)
         else:
-            width = max(map(lambda child: coordinates[child][2] - coordinates[child][0], parent.children))
+            width = max(map(lambda child: dimensions[child][0], parent.children))
             for child in parent.children:
-                x1, y1, x2, y2 = coordinates[child]
-                coordinates[child] = (x1, y1, x1 + width, y2)
+                w, h = dimensions[child]
+                dimensions[child] = (width, h)
 
-    boxes = list(map(lambda child: BoxWithConstraints(child, coordinates), children))
+    boxes = list(map(lambda child: BoxWithConstraints(child, dimensions), children))
     constraints = list(map(lambda constraint: Constraint(next(filter(lambda x: x.box == constraint.box1, boxes),
-                                                              BoxWithConstraints(constraint.box1, coordinates)),
+                                                              BoxWithConstraints(constraint.box1, dimensions)),
                                                          constraint.direction,
                                                          next(filter(lambda x: x.box == constraint.box2, boxes),
-                                                              BoxWithConstraints(constraint.box2, coordinates))),
+                                                              BoxWithConstraints(constraint.box2, dimensions))),
                            constraint_list))
 
     def add_constraint(solver, constraint):

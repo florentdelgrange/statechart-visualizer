@@ -98,10 +98,13 @@ class Box:
             return {self: (0, 0, self.width, self.height)}
         else:
             coordinates = {}
+            dimensions = {}
             for child in self.children:
                 coordinates.update(child.coordinates)
+                x1, y1, x2, y2 = coordinates[child]
+                dimensions[child] = (x2 - x1, y2 - y1)
 
-            new_coordinates = constraint_solver.resolve(self, coordinates, self.children, self._constraints)
+            new_coordinates = constraint_solver.resolve(self, dimensions, self.children, self._constraints)
 
             def update_coordinates(box1, box2):
                 x1, y1, x2, y2 = new_coordinates[box1]
