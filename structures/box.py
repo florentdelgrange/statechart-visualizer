@@ -23,61 +23,33 @@ class Box:
         self._parent = None  # type: Box
         self._shape = 'rectangle'
         self._constraints = []
+        self._width, self._height = -1, -1
 
     @property
     def dimensions(self):
-        width, height = self.compute_dimensions()
-        if self.parallel_states:
-            if self.parent.axis == 'horizontal':
-                height = max(map(lambda x: x.compute_dimensions()[1], self.parent.children))
+        # leaf box
+        if not self.children:
+            if self._parallel_states:
+                p_len = 14 * char_width
             else:
-                width = max(map(lambda x: x.compute_dimensions()[0], self.parent.children))
-        return width, height
-
-    def compute_dimensions(self):
-        """
-        Compute the dimensions of the box.
-
-        :return: the width and the height of the box.
-        """
-        if self._parallel_states:
-            p_len = 14 * char_width
+                p_len = 0
+            if self.entry != '':
+                entry_len = max(map(lambda x: (8 + len(x)) * char_width, self._entry.split('\n')))
+            else:
+                entry_len = 0
+            if self.exit != '':
+                exit_len = max(map(lambda x: (8 + len(x)) * char_width, self._exit.split('\n')))
+            else:
+                exit_len = 0
+            return max(p_len + len(self.name) * char_width, entry_len, exit_len) + 2 * space, self.header + 2 * space
         else:
-            p_len = 0
-        if self.entry != '':
-            entry_len = max(map(lambda x: (8 + len(x)) * char_width, self._entry.split('\n')))
-        else:
-            entry_len = 0
-        if self.exit != '':
-            exit_len = max(map(lambda x: (8 + len(x)) * char_width, self._exit.split('\n')))
-        else:
-            exit_len = 0
-        if self.axis == 'horizontal':
-            width = max(sum(map(lambda x: x.width + space, self.children)) + space,
-                        space + p_len + char_width * len(self.name) + space, 2 * space + entry_len + exit_len)
-            height = max(list(map(lambda x: x.height, self.children)) or [0]) + self.header + 2 * space
-            # self transitions
-            width += sum(map(lambda x: space, filter(lambda child: child.has_self_transition, self.children)))
-            height += next(map(lambda x: space,
-                               filter(lambda child: child.has_self_transition and child.zone == 'west', self.children)),
-                           0)
-            height += next(map(lambda x: space,
-                               filter(lambda child: child.has_self_transition and child.zone == 'east', self.children)),
-                           0)
-        else:
-            width = max(max(list(map(lambda x: x.width, self.children)) or [0]) + 2 * space,
-                        space + p_len + char_width * len(self.name) + space, 2 * space + entry_len + exit_len)
-            height = sum(map(lambda x: x.height + space, self.children)) + space + self.header
-            # self transitions
-            width += next(map(lambda x: space,
-                              filter(lambda child: child.has_self_transition and child.zone == 'north', self.children)),
-                          0)
-            width += next(map(lambda x: space,
-                              filter(lambda child: child.has_self_transition and child.zone == 'south', self.children)),
-                          0)
-            height += sum(map(lambda x: space, filter(lambda child: child.has_self_transition, self.children)))
-
-        return width, height
+            x1, y1, x2, y2 = self.coordinates[self]
+            if self.parallel_states:
+                if self.parent.axis == 'horizontal':
+                    y2 = max(map(lambda child: child.coordinates[child][3], self.parent.children))
+                else:
+                    x2 = max(map(lambda child: child.coordinates[child][2], self.parent.children))
+            return x2, y2
 
     def name_position(self, insert=(0, 0)):
         """
@@ -113,19 +85,34 @@ class Box:
             h += len(self.entry.split('\n')) * char_height
         return w, h
 
-    def get_coordinates(self, insert=(0, 0)):
+    @property
+    def coordinates(self):
         """
         Computes the coordinates of all the Boxes in this Box and returns a dict
         whose key is a box and the value is the insert of the Box.
 
-        :param insert: (optional) the insert of the box - initially (0,0)
         :return: the dictionary linking the boxes with their insert
         """
-        coordinates = constraint_solver.resolve(self, self.children, self._constraints, insert)
-        for child in self.children:
-            x1, y1 = coordinates[child]
-            coordinates.update(child.get_coordinates((x1, y1)))
-        return coordinates
+        if not self.children:
+            return {self: (0, 0, self.width, self.height)}
+        else:
+            coordinates = {}
+            for child in self.children:
+                coordinates.update(child.coordinates)
+
+            new_coordinates = constraint_solver.resolve(self, coordinates, self.children, self._constraints)
+
+            def update_coordinates(box1, box2):
+                x1, y1, x2, y2 = new_coordinates[box1]
+                for child in box2.children:
+                    x3, y3, x4, y4 = coordinates[child]
+                    new_coordinates[child] = (x1 + x3, y1 + y3, x1 + y2, x2 + y4)
+                    update_coordinates(box, child)
+
+            for box in self.children:
+                update_coordinates(box, box)
+
+            return new_coordinates
 
     def move_to(self, direction, box):
         """
@@ -214,7 +201,7 @@ class Box:
         """
         Add the constraint in the right Box.
         If the parent of the two Boxes of the constraint is self, the constraint is added to self.
-        Otherwise, find the common ancestor and add the constraint in this box.
+        Otherwise, find the common ancestor and add the constraint in this ancestor.
         """
         if constraint.box1.parent == constraint.box2.parent == self:
             self._constraints += [constraint]
@@ -222,6 +209,7 @@ class Box:
             ancestors_box1 = [constraint.box1] + constraint.box1.ancestors
             ancestors_box2 = [constraint.box2] + constraint.box2.ancestors
             closest_ancestor = next(filter(lambda x: x in ancestors_box2, ancestors_box1))
+            # find the first child of the ancestor that is an ancestor of the box
             box1 = ancestors_box1[ancestors_box1.index(closest_ancestor) - 1]
             box2 = ancestors_box2[ancestors_box2.index(closest_ancestor) - 1]
             closest_ancestor.add_constraint(Constraint(box1, constraint.direction, box2))
@@ -383,12 +371,6 @@ class Box:
         return "State box : " + self.name
 
 
-def get_coordinates(box, coordinates):
-    x1, y1 = coordinates[box]
-    width, height = box.dimensions
-    return (x1, y1), (x1 + width, y1 + height)
-
-
 def closest_common_ancestor(box1, box2):
     ancestors_box1 = [box1] + box1.ancestors
     ancestors_box2 = [box2] + box2.ancestors
@@ -399,39 +381,6 @@ class GroupBox(Box):
     def __init__(self, axis):
         super().__init__('', axis=axis)
         self._shape = "invisible"
-
-    @property
-    def dimensions(self):
-        width, height = super().dimensions
-        return width - 2 * space, height - 2 * space
-
-    def get_coordinates(self, insert=(0, 0)):
-        x, y = insert
-        coordinates = {self: insert}
-
-        if self._axis == 'horizontal':
-            w = x
-            h = y + (self.height + self.header) / 2
-            for child in self.children:
-                if child.has_self_transition and child.zone == 'west':
-                    w += space
-                coordinates.update(child.get_coordinates(insert=(w, h - child.height / 2)))
-                w += child.width
-                if child.has_self_transition and child.zone == 'east':
-                    w += space
-                w += space
-        else:
-            w = x + self.width / 2
-            h = y + self.header - space
-            for child in self.children:
-                if child.has_self_transition and child.zone == 'north':
-                    h += space
-                coordinates.update(child.get_coordinates(insert=(w - child.width / 2, h)))
-                h += child.height
-                if child.has_self_transition and child.zone == 'south':
-                    h += space
-                h += space
-        return coordinates
 
     @property
     def header(self):

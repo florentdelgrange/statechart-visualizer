@@ -1,3 +1,4 @@
+from cassowary import STRONG
 from cassowary import SimplexSolver, Variable, WEAK
 
 space = 20
@@ -26,11 +27,12 @@ class Constraint:
 
 
 class BoxWithConstraints:
-    def __init__(self, box):
+    def __init__(self, box, coordinates):
         self._box = box
         self._x = Variable(box.name + ' x', 0)
         self._y = Variable(box.name + ' y', 0)
-        self._width, self._height = box.dimensions
+        x1, y1, x2, y2 = coordinates[box]
+        self._width, self._height = x2 - x1, y2 - y1
 
         def additional_space():
             x1, y1, x2, y2 = 0, 0, 0, 0
@@ -58,6 +60,10 @@ class BoxWithConstraints:
         return self._y
 
     @property
+    def space(self):
+        return self._space
+
+    @property
     def width(self):
         return self._width
 
@@ -65,17 +71,33 @@ class BoxWithConstraints:
     def height(self):
         return self._height
 
-    @property
-    def space(self):
-        return self._space
-
     def __repr__(self):
         return 'decorator<' + self.box.__repr__() + '>'
 
 
-def resolve(parent, children, constraint_list, insert=(0, 0)):
-    x, y = insert
-    boxes = list(map(lambda child: BoxWithConstraints(child), children))
+def resolve(parent, coordinates, children, constraint_list):
+    """
+    Resolve a coordinates problem. The coordinates of the children entered in parameter will be computed.
+    :param parent: the main box that contains the children entered in parameter
+    :param coordinates: the dict of children's boxes coordinates (can be obtained by child.coordinates)
+    :param children: the children to dispose in the parent's box
+    :param constraint_list: the list of constraints
+    :return: the dict that contains the coordinates of the children in parameter
+    """
+
+    if parent.orthogonal_state:
+        if parent.axis == 'horizontal':
+            height = max(map(lambda child: coordinates[child][3] - coordinates[child][1], parent.children))
+            for child in parent.children:
+                x1, y1, x2, y2 = coordinates[child]
+                coordinates[child] = (x1, y1, x2, y1 + height)
+        else:
+            width = max(map(lambda child: coordinates[child][2] - coordinates[child][0], parent.children))
+            for child in parent.children:
+                x1, y1, x2, y2 = coordinates[child]
+                coordinates[child] = (x1, y1, x1 + width, y2)
+
+    boxes = list(map(lambda child: BoxWithConstraints(child, coordinates), children))
     constraints = list(map(lambda constraint: Constraint(next(filter(lambda x: x.box == constraint.box1, boxes),
                                                               BoxWithConstraints(constraint.box1)),
                                                          constraint.direction,
@@ -89,26 +111,23 @@ def resolve(parent, children, constraint_list, insert=(0, 0)):
         x1, y1, x2, y2 = box1.space
         x3, y3, x4, y4 = box2.space
         {
-            'north': lambda: solver.add_constraint(box1.y + box1.height + y2 + space + y3 < box2.y),
-            'east': lambda: solver.add_constraint(box1.x > box2.x + box2.width + x4 + space + x1),
-            'south': lambda: solver.add_constraint(box1.y > box2.y + box2.height + y4 + space + y1),
-            'west': lambda: solver.add_constraint(box1.x + box1.width + x2 + space + x3 < box2.x)
+            'north': lambda: solver.add_constraint(box1.y + box1.height + y2 + space + y3 < box2.y, strength=STRONG),
+            'east': lambda: solver.add_constraint(box1.x > box2.x + box2.width + x4 + space + x1, strength=STRONG),
+            'south': lambda: solver.add_constraint(box1.y > box2.y + box2.height + y4 + space + y1, strength=STRONG),
+            'west': lambda: solver.add_constraint(box1.x + box1.width + x2 + space + x3 < box2.x, strength=STRONG)
         }[constraint.direction]()
 
     solver = SimplexSolver()
 
     # dimension of the frame
-    width, height = parent.dimensions
-    left_limit = Variable('left', x)
-    top_limit = Variable('top', y + parent.header)
-    right_limit = Variable('right', x + width)
-    bot_limit = Variable('bottom', y + height)
+    left_limit = Variable('left', 0)
+    top_limit = Variable('top', parent.header)
+    right_limit = Variable('right', 0)
+    bot_limit = Variable('bottom', 0)
 
     # define the base constraints (stay)
     solver.add_stay(left_limit)
     solver.add_stay(top_limit)
-    solver.add_stay(right_limit)
-    solver.add_stay(bot_limit)
 
     for i in range(len(boxes)):
         b1 = boxes[i]
@@ -131,7 +150,7 @@ def resolve(parent, children, constraint_list, insert=(0, 0)):
     for constraint in constraints:
         add_constraint(solver, constraint)
 
-    coordinates = {parent: insert}
+    new_coordinates = {parent: (0, 0, right_limit.value, bot_limit.value)}
     for box in boxes:
-        coordinates[box.box] = (box.x.value, box.y.value)
-    return coordinates
+        new_coordinates[box.box] = (box.x.value, box.y.value, box.x.value + box.width, box.y.value + box.height)
+    return new_coordinates

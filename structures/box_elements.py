@@ -83,7 +83,7 @@ class RootBox(Box):
             return transitions + t
 
         transitions = find_transitions(self)
-        update_transitions_coordinates(transitions, self.get_coordinates())
+        update_transitions_coordinates(transitions, self.coordinates)
         return transitions
 
     @property

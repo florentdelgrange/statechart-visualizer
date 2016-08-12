@@ -34,7 +34,8 @@ def render_box(box: Box, coordinates):
     g = svgwrite.container.Group()
 
     # First draw the main box
-    insert = coordinates[box]
+    x1, y1, x2, y2 = coordinates[box]
+    insert = x1, y1
     shape = get_shape(box, insert)
     if shape is not None:
         g.add(shape)
@@ -98,7 +99,8 @@ def export(box: Box):
     :param box: the box that will be on the svg file
     """
     dwg = svgwrite.Drawing(box.name + ".svg", size=(box.width, box.height))
-    dwg.add(render_box(box, box.get_coordinates()))
+    dwg.add(render_box(box, box.coordinates))
+    print(box.coordinates)
     marker = svgwrite.container.Marker(insert=(8, 3), orient='auto', markerWidth=30, markerHeight=20,
                                        id="arrow")
     path = svgwrite.path.Path(d="M0,0 L0,6 L9,3 z")
