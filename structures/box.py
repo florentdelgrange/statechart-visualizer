@@ -67,7 +67,7 @@ class Box:
         else:
             width = max(max(list(map(lambda x: x.width, self.children)) or [0]) + 2 * space,
                         space + p_len + char_width * len(self.name) + space, 2 * space + entry_len + exit_len)
-            height = sum(map(lambda x: x.height + space, self.children)) + self.header
+            height = sum(map(lambda x: x.height + space, self.children)) + space + self.header
             # self transitions
             width += next(map(lambda x: space,
                               filter(lambda child: child.has_self_transition and child.zone == 'north', self.children)),

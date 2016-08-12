@@ -89,7 +89,7 @@ def resolve(parent, children, constraint_list, insert=(0, 0)):
         x1, y1, x2, y2 = box1.space
         x3, y3, x4, y4 = box2.space
         {
-            'north': lambda: solver.add_constraint(box1.y + box1.height + y2 + space + box2.y < y3),
+            'north': lambda: solver.add_constraint(box1.y + box1.height + y2 + space + y3 < box2.y),
             'east': lambda: solver.add_constraint(box1.x > box2.x + box2.width + x4 + space + x1),
             'south': lambda: solver.add_constraint(box1.y > box2.y + box2.height + y4 + space + y1),
             'west': lambda: solver.add_constraint(box1.x + box1.width + x2 + space + x3 < box2.x)
@@ -117,10 +117,12 @@ def resolve(parent, children, constraint_list, insert=(0, 0)):
         solver.add_constraint(b1.y > top_limit + space + y1)
         solver.add_constraint(b1.x + b1.width + x2 + space < right_limit)
         solver.add_constraint(b1.y + b1.height + y2 + space < bot_limit)
+        if parent.axis == 'horizontal':
+            solver.add_constraint(b1.y + y1 - top_limit == bot_limit - b1.y - b1.height - y2, strength=WEAK)
+        else:
+            solver.add_constraint(b1.x + x1 - left_limit == right_limit - b1.x - b1.width - x2, strength=WEAK)
         for b2 in boxes[i + 1:]:
             x3, y3, x4, y4 = b2.space
-            print(b1, x1, y1, x2, y2, b1.box.zone)
-            print(b2, x3, y3, x4, y4, b2.box.zone)
             if parent.axis == 'horizontal':
                 solver.add_constraint(b2.x > b1.x + b1.width + space + x2 + x3, strength=WEAK)
             else:

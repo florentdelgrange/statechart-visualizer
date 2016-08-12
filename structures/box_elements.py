@@ -19,7 +19,7 @@ class InitBox(Box):
 
 class RootBox(Box):
     def __init__(self, statechart):
-        super().__init__(name=statechart.name, axis='vertical')
+        super().__init__(name=statechart.name, axis='horizontal')
 
         # first initializes all the boxes
         self._inner_states = [Box(name) for name in statechart.states]
