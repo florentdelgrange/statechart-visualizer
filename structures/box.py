@@ -205,7 +205,18 @@ class Box:
         Otherwise, find the common ancestor and add the constraint in this ancestor.
         """
         if constraint.box1.parent == constraint.box2.parent == self:
-            self._constraints += [constraint]
+            # contradiction checking
+            opposite = {'north': 'south', 'south': 'north', 'east': 'west', 'west': 'east'}
+            opposite_constraints = list(
+                filter(lambda c: (c.box1 == constraint.box1 and c.box2 == constraint.box2 and opposite[
+                    c.direction] == constraint.direction) or (
+                                     c.box1 == constraint.box2 and c.box2 == constraint.box1 and c.direction == constraint.direction),
+                       self._constraints))
+            if opposite_constraints:
+                for x in opposite_constraints:
+                    self._constraints.remove(x)
+            else:
+                self._constraints += [constraint]
         else:
             ancestors_box1 = [constraint.box1] + constraint.box1.ancestors
             ancestors_box2 = [constraint.box2] + constraint.box2.ancestors

@@ -27,11 +27,14 @@ class Constraint:
 
 
 class BoxWithConstraints:
+    """
+    Box decorator for the resolution of constraints
+    """
     def __init__(self, box, coordinates):
-        self._box = box
-        self._x = Variable(box.name + ' x', 0)
-        self._y = Variable(box.name + ' y', 0)
         x1, y1, x2, y2 = coordinates[box]
+        self._box = box
+        self._x = Variable(box.name + ' x', x1)
+        self._y = Variable(box.name + ' y', y1)
         self._width, self._height = x2 - x1, y2 - y1
 
         def additional_space():
@@ -99,10 +102,10 @@ def resolve(parent, coordinates, children, constraint_list):
 
     boxes = list(map(lambda child: BoxWithConstraints(child, coordinates), children))
     constraints = list(map(lambda constraint: Constraint(next(filter(lambda x: x.box == constraint.box1, boxes),
-                                                              BoxWithConstraints(constraint.box1)),
+                                                              BoxWithConstraints(constraint.box1, coordinates)),
                                                          constraint.direction,
                                                          next(filter(lambda x: x.box == constraint.box2, boxes),
-                                                              BoxWithConstraints(constraint.box2))),
+                                                              BoxWithConstraints(constraint.box2, coordinates))),
                            constraint_list))
 
     def add_constraint(solver, constraint):

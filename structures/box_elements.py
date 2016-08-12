@@ -87,6 +87,17 @@ class RootBox(Box):
         return transitions
 
     @property
+    def constraints(self):
+        def find_constraints(box, constraints=[]):
+            c = []
+            for child in box.children:
+                c += find_constraints(child, child._constraints)
+            return constraints + c
+
+        constraints = find_constraints(self)
+        return constraints
+
+    @property
     def zone(self):
         return 'all'
 
