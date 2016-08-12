@@ -220,9 +220,11 @@ class Box:
                     self._constraints.remove(x)
             else:
                 self._constraints += [constraint]
-                if len(self.children) == 2 and constraint.direction in ['north', 'south'] and self.axis == 'horizontal':
+                if all(map(lambda x: x.direction in ['north', 'south'], self._constraints))\
+                        and self.axis == 'horizontal':
                     self.axis = 'vertical'
-                elif len(self.children) == 2 and constraint.direction in ['west', 'east'] and self.axis == 'vertical':
+                elif all(map(lambda x: x.direction in ['west', 'east'], self._constraints))\
+                        and self.axis == 'vertical':
                     self.axis = 'horizontal'
         else:
             ancestors_box1 = [constraint.box1] + constraint.box1.ancestors
