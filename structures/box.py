@@ -243,13 +243,24 @@ class Box:
         return self._children
 
     def add_child(self, box, index=-1, constraint=None):
+        """
+        Add a box as a child of this Box
+        :param box: the child
+        :param index: (optional) the child will be the ith son of this Box.
+            If this parameter is missing, the child will be added as last son.
+        :param constraint: (optional) It is a tuple that defines a constraint on the child.
+            Example : box.add_child(state1, constraint=('south', state2))
+            means that the state1 will be added to box with the constraint that state1 has to be south of state 2.
+        :return: True if the child is added correctly to the box
+        """
         if isinstance(box, Box):
-            if index != -1:
+            if index >= 0:
                 self._children = self.children[:index] + [box] + self.children[index:]
             else:
                 self._children.append(box)
             box._parent = self
             if constraint is not None:
+                constraint = Constraint(self, constraint[0], constraint[1])
                 self.add_constraint(constraint)
             return True
         return False
