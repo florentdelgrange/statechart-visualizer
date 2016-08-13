@@ -218,13 +218,15 @@ class Box:
             if opposite_constraints:
                 for x in opposite_constraints:
                     self._constraints.remove(x)
+            elif any(filter(lambda x: constraint.box1 == x.box1 and constraint.box2 == x.box2, self._constraints)):
+                return
             else:
                 self._constraints += [constraint]
-                if all(map(lambda x: x.direction in ['north', 'south'], self._constraints))\
-                        and self.axis == 'horizontal':
+                if len(list(filter(lambda child: child.shape != 'circle', self.children))) == 2 \
+                        and constraint.direction in ['north', 'south'] and self.axis == 'horizontal':
                     self.axis = 'vertical'
-                elif all(map(lambda x: x.direction in ['west', 'east'], self._constraints))\
-                        and self.axis == 'vertical':
+                elif len(list(filter(lambda child: child.shape == 'circle', self.children))) == 2 \
+                        and constraint.direction in ['west', 'east'] and self.axis == 'vertical':
                     self.axis = 'horizontal'
         else:
             ancestors_box1 = [constraint.box1] + constraint.box1.ancestors
