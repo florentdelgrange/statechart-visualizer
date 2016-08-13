@@ -144,11 +144,13 @@ def resolve(parent, dimensions, children, constraint_list):
         else:
             solver.add_constraint(b1.x + x1 - left_limit == right_limit - b1.x - b1.width - x2, strength=WEAK)
         for b2 in boxes[i + 1:]:
-            x3, y3, x4, y4 = b2.space
-            if parent.axis == 'horizontal':
-                solver.add_constraint(b2.x > b1.x + b1.width + space + x2 + x3, strength=WEAK)
-            else:
-                solver.add_constraint(b2.y > b1.y + b1.height + space + y2 + y3, strength=WEAK)
+            if not(any(filter(lambda constraint: b1 in [constraint.box1, constraint.box2]\
+                    and b2 in [constraint.box1, constraint.box2], constraints))):
+                x3, y3, x4, y4 = b2.space
+                if parent.axis == 'horizontal':
+                    solver.add_constraint(b2.x > b1.x + b1.width + space + x2 + x3, strength=WEAK)
+                else:
+                    solver.add_constraint(b2.y > b1.y + b1.height + space + y2 + y3, strength=WEAK)
 
     for constraint in constraints:
         add_constraint(solver, constraint)
