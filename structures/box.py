@@ -326,7 +326,8 @@ class Box:
 
     @entry.setter
     def entry(self, entry: str):
-        self._entry = entry
+        if entry is not None:
+            self._entry = entry
 
     @property
     def exit(self):
@@ -334,7 +335,8 @@ class Box:
 
     @exit.setter
     def exit(self, exit: str):
-        self._exit = exit
+        if exit is not None:
+            self._exit = exit
 
     @property
     def parallel_states(self):
@@ -413,7 +415,9 @@ class Box:
     @property
     def zone(self):
         """
-        :return: the zone of the box following its parent
+        Get the initial zone of the box following its parent.
+        Note that the constraints will have no influence on this function.
+        :return: 'north' | 'east' | 'south' | 'west'
         """
         if self.parent.children.index(self) <= len(self.parent.children) / 2 - 1:
             if self.parent.axis == 'horizontal':
@@ -437,15 +441,6 @@ class Box:
         return "State box : " + self.name
 
 
-def lower_common_ancestor(box1: Box, box2: Box):
-    """
-    :return: the lower common ancestor of the two boxes in parameter.
-    """
-    ancestors_box1 = [box1] + box1.ancestors
-    ancestors_box2 = [box2] + box2.ancestors
-    return next(filter(lambda x: x in ancestors_box2, ancestors_box1))
-
-
 class GroupBox(Box):
     """
     Invisible Box. The goal is to group two boxes on the same axis. Used principally for the move action in Box.
@@ -461,3 +456,12 @@ class GroupBox(Box):
 
     def __repr__(self):
         return "GroupBox : " + self.children.__str__()
+
+
+def lower_common_ancestor(box1: Box, box2: Box):
+    """
+    :return: the lower common ancestor of the two boxes in parameter.
+    """
+    ancestors_box1 = [box1] + box1.ancestors
+    ancestors_box2 = [box2] + box2.ancestors
+    return next(filter(lambda x: x in ancestors_box2, ancestors_box1))

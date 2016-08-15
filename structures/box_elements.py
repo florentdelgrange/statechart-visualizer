@@ -1,3 +1,5 @@
+import math
+
 from structures.box import Box, radius
 from structures.transition import Transition, update_transitions_coordinates
 import sismic
@@ -31,7 +33,7 @@ class RootBox(Box):
     :param statechart: it is an instance of a statechart object from sismic.
     """
 
-    def __init__(self, statechart: sismic.statechart):
+    def __init__(self, statechart: sismic.model.Statechart):
         super().__init__(name=statechart.name, axis='horizontal')
 
         self._inner_states = [Box(name) for name in statechart.states]
@@ -115,10 +117,6 @@ class RootBox(Box):
         return constraints
 
     @property
-    def zone(self):
-        return 'all'
-
-    @property
     def inner_states(self):
         """
         :return: all the Boxes that represents a state of the statechart.
@@ -132,6 +130,30 @@ class RootBox(Box):
         :return: the instance of the box with the name entered in parameter.
         """
         return next(filter(lambda box: box.name == state_name, self._inner_states))
+
+    def zone(self, box1, box2):
+        """
+        Get the zone of the box1 compared to the box2.
+        example : if zone(box1, box2) returns ['south', 'east'] it means that box1 is south east of box2.
+        :param box1: the first box (must be in the inner boxes)
+        :param box2: the second box (must be in the inner boxes)
+        :return: the zone of the box1 compared to the box2
+        """
+        coordinates = self.coordinates
+        x1, y1, x2, y2 = coordinates[box1]
+        x3, y3, x4, y4 = coordinates[box2]
+        x1, y1 = (x1 + x2) / 2., (y1 + y2) / 2.
+        x2, y2 = (x3 + x4) / 2., (y3 + y4) / 2.
+        zone = []
+        if x1 < x2:
+            zone.append('west')
+        elif x1 > x2:
+            zone.append('east')
+        if y1 < y2:
+            zone.append('north')
+        elif y1 > y2:
+            zone.append('south')
+        return zone
 
     def __repr__(self):
         return "Root Box: " + self.name
