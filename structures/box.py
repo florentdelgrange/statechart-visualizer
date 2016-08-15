@@ -6,7 +6,9 @@ char_width, char_height, space, radius = 10, 20, 20, 20
 
 class Box:
     """
-    A box intends to represent a state and has its own dimensions.
+    A box intends to represent a state of a statechart with the goal to be exported to a svg file.
+    You can modify the positions of the Boxes by moving them or
+    adding constraints on their positions against each other.
 
     :param name: the state name
     :param axis: 'vertical' | 'horizontal': the inner boxes will be positioned on this axis
@@ -21,12 +23,16 @@ class Box:
         self._entry = ''  # type: str
         self._exit = ''  # type: str
         self._parent = None  # type: Box
-        self._shape = 'rectangle'
-        self._constraints = []
+        self._shape = 'rectangle'  # type: str
+        self._constraints = []  # type: list[Constraint]
         self._width, self._height = -1, -1
 
     @property
     def dimensions(self):
+        """
+        get the dimensions of this box (depends to its name, entry zone, exit zone and its inner boxes).
+        :return: a tuple of int containing the dimension of the Box : (width, height)
+        """
         # leaf box
         if not self.children:
             if self._parallel_states:
@@ -67,7 +73,8 @@ class Box:
 
     def entry_position(self, insert=(0, 0)):
         """
-        gives the coordinates of the entry zone insert position
+        gives the insert coordinates of the entry zone following the insert coordinates of the Box (given in parameter)
+        :return: the coordinates of the entry text zone
         """
         w, h = self.name_position(insert)
         if self._entry != '':
@@ -77,7 +84,8 @@ class Box:
 
     def exit_position(self, insert=(0, 0)):
         """
-        gives the coordinates of the exit zone insert position
+        gives the insert coordinates of the exit zone following the insert coordinates of the Box (given in parameter)
+        :return: the coordinates of the exit text zone
         """
         w, h = self.entry_position(insert)
         if self._exit != '':
@@ -89,9 +97,9 @@ class Box:
     def coordinates(self):
         """
         Computes the coordinates of all the Boxes in this Box and returns a dict
-        whose key is a box and the value is the insert of the Box.
+        whose key is a Box and the value is its coordinates.
 
-        :return: the dictionary linking the boxes with their insert
+        :return: the dictionary linking the boxes (in this box) with their coordinates
             format : {Box : (x1, y1, x2, y2)} where insert=(x1, y1) and end=(x2, y2)
         """
         if not self.children:
@@ -120,12 +128,18 @@ class Box:
 
     def move_to(self, direction, box):
         """
-        move the box (self) following the direction of this box with the box in parameter
-        :param direction: direction of self with the box in parameter ; type : str
-        :param box: this box will not move : self will be moved following the direction of this box
+        Move the Box (self) following the direction of this box with the box in parameter.
+        example : box1.move_to('south of', box2) will move the box1 to south of box2.
+        Note that just the children's list of the Box will be modified ie the Box will be moved
+        without constraint on it. A constraint has more weight that the move action ; if you add
+        a constraint and you try to move a box in an opposite direction of this constraint to the same box,
+        nothing will append.
+
+        :param direction: direction of self with the box in parameter.
+               direction in {'north of' | 'south of' | 'east of' | 'west of'}
+        :param box: this box will not be moved : self will be moved following the direction of this box.
         """
 
-        # base case : self and box are brothers
         def smooth(box):
             for i in range(len(box.children)):
                 child = box.children[i]
@@ -135,9 +149,8 @@ class Box:
                         new_child = child.children[j]
                         box.add_child(new_child, i + j)
 
-        if self == box:
-            return
-        if self in box.parent.children:
+        if self in box.parent.children and self != box \
+                and direction in ['north of', 'south of', 'east of', 'west of']:
             parent = box.parent
             i_self = parent.children.index(self)
             i_box = parent.children.index(box)
@@ -193,7 +206,7 @@ class Box:
                     container.add_child(box)
                     container.add_child(self)
                     parent.add_child(container, index=i_box)
-            smooth(closest_common_ancestor(self, box))
+            smooth(lower_common_ancestor(self, box))
         else:
             ancestors_box1 = [self] + self.ancestors
             ancestors_box2 = [box] + box.ancestors
@@ -201,7 +214,7 @@ class Box:
             ancestors_box1[ancestors_box1.index(parent) - 1].move_to(direction, ancestors_box2[
                 ancestors_box2.index(parent) - 1])
 
-    def add_constraint(self, constraint):
+    def add_constraint(self, constraint: Constraint):
         """
         Add the constraint in the right Box.
         If the parent of the two Boxes of the constraint is self, the constraint is added to self.
@@ -218,14 +231,15 @@ class Box:
             if opposite_constraints:
                 for x in opposite_constraints:
                     self._constraints.remove(x)
-            elif any(filter(lambda x: constraint.box1 == x.box1 and constraint.box2 == x.box2, self._constraints)):
+            elif any(filter(lambda x: constraint.box1 == x.box1 and \
+                            constraint.box2 == x.box2 and constraint.direction == x.direction, self._constraints)):
                 return
             else:
                 self._constraints += [constraint]
                 if len(list(filter(lambda child: child.shape != 'circle', self.children))) == 2 \
                         and constraint.direction in ['north', 'south'] and self.axis == 'horizontal':
                     self.axis = 'vertical'
-                elif len(list(filter(lambda child: child.shape == 'circle', self.children))) == 2 \
+                elif len(list(filter(lambda child: child.shape != 'circle', self.children))) == 2 \
                         and constraint.direction in ['west', 'east'] and self.axis == 'vertical':
                     self.axis = 'horizontal'
         else:
@@ -270,13 +284,17 @@ class Box:
             else:
                 self._children.append(box)
             box._parent = self
-            if constraint is not None:
+            if constraint is not None and isinstance(constraint[1], Box):
                 constraint = Constraint(box, constraint[0], constraint[1])
                 self.add_constraint(constraint)
             return True
         return False
 
     def remove_child(self, box):
+        """
+        Remove the child of the children list entered in parameter.
+        :return: True if the child is correctly removed from the children list
+        """
         if box in self.children:
             self.children.remove(box)
             box._parent = None
@@ -286,9 +304,17 @@ class Box:
 
     @property
     def transitions(self):
+        """
+        :return: the list of transitions such that the source of the transitions is self.
+        """
         return self._transitions
 
     def add_transition(self, transition):
+        """
+        Add a transition to the list of transition
+        :param transition: the source of this transition must be self.
+        :return: True if the transition is correctly added.
+        """
         if transition is not None and transition.source == self:
             self._transitions.append(transition)
             return True
@@ -299,25 +325,23 @@ class Box:
         return self._entry
 
     @entry.setter
-    def entry(self, entry):
-        if type(entry) is str:
-            self._entry = entry
+    def entry(self, entry: str):
+        self._entry = entry
 
     @property
     def exit(self):
         return self._exit
 
     @exit.setter
-    def exit(self, exit):
-        if type(exit) is str:
-            self._exit = exit
+    def exit(self, exit: str):
+        self._exit = exit
 
     @property
     def parallel_states(self):
         return self._parallel_states
 
     def add_parallel_state(self, parallel_state):
-        if type(parallel_state) is Box:
+        if isinstance(parallel_state, Box):
             self._parallel_states.append(parallel_state)
             return True
         return False
@@ -325,7 +349,7 @@ class Box:
     @property
     def orthogonal_state(self):
         """
-        return True if this state is an orthogonal state ie their
+        :return: True if this state is an orthogonal state ie their
         children have parallel_states.
         """
         return next((True for child in self.children if child.parallel_states), False)
@@ -333,7 +357,7 @@ class Box:
     @property
     def header(self):
         """
-        Height of the header (name + entry)
+        Height of the header (name + entry + exit)
 
         :return: the height of the header
         """
@@ -348,6 +372,9 @@ class Box:
 
     @property
     def ancestors(self):
+        """
+        Get the ancestors of this Box.
+        """
         if self.parent is not None:
             return [self.parent] + self.parent.ancestors
         else:
@@ -355,18 +382,31 @@ class Box:
 
     @property
     def shape(self):
+        """
+        Get the shape of this Box.
+        """
         return self._shape
 
     @property
     def parent(self):
+        """
+        Get the parent of this Box.
+        """
         return self._parent
 
     @property
     def axis(self):
+        """
+        Get the axis of this box
+        """
         return self._axis
 
     @axis.setter
     def axis(self, axis):
+        """
+        Set the axis of this Box.
+        :param axis: axis in {'horizontal' | 'vertical'}
+        """
         if axis == 'horizontal' or axis == 'vertical':
             self._axis = axis
 
@@ -388,19 +428,29 @@ class Box:
 
     @property
     def has_self_transition(self):
+        """
+        :return: True if the box has a self transition.
+        """
         return next((True for t in self.transitions if t.target == self), False)
 
     def __repr__(self):
         return "State box : " + self.name
 
 
-def closest_common_ancestor(box1, box2):
+def lower_common_ancestor(box1: Box, box2: Box):
+    """
+    :return: the lower common ancestor of the two boxes in parameter.
+    """
     ancestors_box1 = [box1] + box1.ancestors
     ancestors_box2 = [box2] + box2.ancestors
     return next(filter(lambda x: x in ancestors_box2, ancestors_box1))
 
 
 class GroupBox(Box):
+    """
+    Invisible Box. The goal is to group two boxes on the same axis. Used principally for the move action in Box.
+    """
+
     def __init__(self, axis):
         super().__init__('', axis=axis)
         self._shape = "invisible"

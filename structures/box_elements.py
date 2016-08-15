@@ -1,12 +1,17 @@
 from structures.box import Box, radius
 from structures.transition import Transition, update_transitions_coordinates
+import sismic
 from sismic.model.elements import CompoundState, OrthogonalState
 
 
 class InitBox(Box):
-    def __init__(self, root_state):
+    """
+    This box is the black circle that indicate the init state.
+    It always has a transition to this state.
+    """
+    def __init__(self, init_state):
         super().__init__(name='', axis=None)
-        self._transitions = [Transition(source=self, target=root_state)]
+        self._transitions = [Transition(source=self, target=init_state)]
         self._shape = 'circle'
 
     @property
@@ -18,14 +23,19 @@ class InitBox(Box):
 
 
 class RootBox(Box):
-    def __init__(self, statechart):
+    """
+    This Box is the main box that will contain all the boxes.
+    It intends to represent a statechart.
+
+    :param statechart: it is an instance of a statechart object from sismic.
+    """
+    def __init__(self, statechart: sismic.statechart):
         super().__init__(name=statechart.name, axis='horizontal')
 
-        # first initializes all the boxes
         self._inner_states = [Box(name) for name in statechart.states]
 
         def init(state, axis):
-            # note : horizontal axis parameter allow alternating of axis for the initialization
+            # alternate the axis for the children
             axis = next(filter(lambda x: x != axis, ['horizontal', 'vertical']))
             box = next(x for x in self._inner_states if x.name == state.name)
             children_statechart = statechart.children_for(state.name)
@@ -72,8 +82,8 @@ class RootBox(Box):
     @property
     def transitions(self):
         """
-        Return all the transitions in this box
-        Compute their positions and update them
+        Compute their positions and update them.
+        :return: all the transitions in the statechart.
         """
 
         def find_transitions(box, transitions=[]):
@@ -88,6 +98,9 @@ class RootBox(Box):
 
     @property
     def constraints(self):
+        """
+        :return: all the constraints on the Boxes situated in this Root Box.
+        """
         def find_constraints(box, constraints=[]):
             c = []
             for child in box.children:
@@ -103,6 +116,9 @@ class RootBox(Box):
 
     @property
     def inner_states(self):
+        """
+        :return: all the Boxes that represents a state of the statechart.
+        """
         return self._inner_states
 
     def __repr__(self):
