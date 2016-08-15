@@ -9,6 +9,7 @@ class InitBox(Box):
     This box is the black circle that indicate the init state.
     It always has a transition to this state.
     """
+
     def __init__(self, init_state):
         super().__init__(name='', axis=None)
         self._transitions = [Transition(source=self, target=init_state)]
@@ -29,6 +30,7 @@ class RootBox(Box):
 
     :param statechart: it is an instance of a statechart object from sismic.
     """
+
     def __init__(self, statechart: sismic.statechart):
         super().__init__(name=statechart.name, axis='horizontal')
 
@@ -78,6 +80,7 @@ class RootBox(Box):
         self.add_child(InitBox(root))
         self.add_child(root)
         self.entry = statechart.preamble
+        self.transitions  # initialize the transitions coordinates
 
     @property
     def transitions(self):
@@ -101,6 +104,7 @@ class RootBox(Box):
         """
         :return: all the constraints on the Boxes situated in this Root Box.
         """
+
         def find_constraints(box, constraints=[]):
             c = []
             for child in box.children:
@@ -120,6 +124,14 @@ class RootBox(Box):
         :return: all the Boxes that represents a state of the statechart.
         """
         return self._inner_states
+
+    def get_box_by_name(self, state_name: str):
+        """
+        Get the instance of the box with the state name entered in parameter.
+        :param state_name: name of the Box to find (must be in the statechart).
+        :return: the instance of the box with the name entered in parameter.
+        """
+        return next(filter(lambda box: box.name == state_name, self._inner_states))
 
     def __repr__(self):
         return "Root Box: " + self.name
