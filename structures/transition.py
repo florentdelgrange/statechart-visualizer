@@ -60,20 +60,18 @@ class Transition:
 
     def conflicts_with_boxes(self, coordinates: Dict):
 
-        def box_conflict(box):
+        def conflict(box):
             for segment1 in self.segments:
                 for segment2 in get_box_segments(box, coordinates):
-                    intersection = intersect(segment1, segment2)
-                    if intersection:
-                        return intersection
+                    if intersect(segment1, segment2):
+                        return True
             return False
 
         conflict_list = []
         for box in coordinates.keys():
             if box not in self.target.ancestors and box != self.source and box != self.target:
-                conflict = box_conflict(box)
-                if conflict:
-                    conflict_list.append((box, conflict))
+                if conflict(box):
+                    conflict_list.append(box)
         return conflict_list
 
     def __str__(self):
