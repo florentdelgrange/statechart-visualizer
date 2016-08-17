@@ -59,6 +59,13 @@ class Transition:
         self._x1, self._x2, self._y1, self._y2 = x1, x2, y1, y2
 
     def conflicts_with_boxes(self, coordinates: Dict):
+        """
+        Compute the intersections with the boxes in parameter and this transition.
+        Note that only the boxes intersected unrelated the source and the target will
+        be added to the list returned.
+        :param coordinates: the dict linking the boxes with their coordinates
+        :return: the list of boxes intersected
+        """
 
         def conflict(box):
             for segment1 in self.segments:
@@ -75,6 +82,11 @@ class Transition:
         return conflict_list
 
     def conflicts_with_transitions(self, transitions):
+        """
+        Compute the conflicts with the other transitions in parameter.
+        :param transitions: the list of transitions to compute the intersection
+        :return: the list of transitions intersected
+        """
 
         def conflict(transition):
             for segment1 in self.segments:
