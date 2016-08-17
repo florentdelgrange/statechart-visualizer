@@ -1,8 +1,9 @@
 from sismic import io
 import sismic
 import unittest
-from structures.segment import Segment, intersect, combined_segments
+from structures.segment import Segment, intersect, combined_segments, get_box_segments
 from constraint_solver import Constraint
+from structures.box import Box
 from structures.box_elements import RootBox
 
 
@@ -28,6 +29,15 @@ class TestSegment(unittest.TestCase):
         self.assertEqual(combined.p1, (4, 1))
         self.assertEqual(combined.p2, (6, 1))
 
+    def test_Box(self):
+        box = Box('random')
+        coordinates = {box: (10, 10, 30, 40)}
+        s1, s2, s3, s4 = get_box_segments(box, coordinates)
+        self.assertEqual((s1.p1, s1.p2), ((10, 10), (30, 10)))
+        self.assertEqual((s2.p1, s2.p2), ((10, 10), (10, 40)))
+        self.assertEqual((s3.p1, s3.p2), ((10, 40), (30, 40)))
+        self.assertEqual((s4.p1, s4.p2), ((30, 10), (30, 40)))
+
 
 class TestTransitions(unittest.TestCase):
     def setUp(self):
@@ -46,7 +56,7 @@ class TestTransitions(unittest.TestCase):
             for i in range(len(segments)):
                 segment = segments[i]
                 if transition.polyline:
-                    self.assertEqual((segment.p1, segment.p2), (transition.polyline[i], transition.polyline[i+1]))
+                    self.assertEqual((segment.p1, segment.p2), (transition.polyline[i], transition.polyline[i + 1]))
                 else:
                     self.assertEqual((segment.p1, segment.p2), transition.coordinates)
 

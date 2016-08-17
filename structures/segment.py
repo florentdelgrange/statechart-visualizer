@@ -1,3 +1,7 @@
+from structures.box import Box
+from typing import Dict, Tuple
+
+
 class Segment:
     def __init__(self, point1: float, point2: float):
         self._p1 = point1
@@ -34,6 +38,9 @@ class Segment:
             return lambda x: self.slope * x + (y1 - self.slope * x1)
         else:
             return x1
+
+    def __repr__(self):
+        return 'Segment ' + self._p1.__repr__() + ", " + self._p2.__repr__()
 
 
 def combined_segments(segment1: Segment, segment2: Segment):
@@ -82,3 +89,10 @@ def intersect(segment1: Segment, segment2: Segment):
             return x, y
         else:
             return -float('inf'), float('inf')
+
+
+def get_box_segments(box: Box, coordinates: Dict[Box, Tuple[float, float, float, float]]) -> \
+        (Segment, Segment, Segment, Segment):
+    x1, y1, x2, y2 = coordinates[box]
+    return Segment((x1, y1), (x2, y1)), Segment((x1, y1), (x1, y2)), \
+           Segment((x1, y2), (x2, y2)), Segment((x2, y1), (x2, y2))
