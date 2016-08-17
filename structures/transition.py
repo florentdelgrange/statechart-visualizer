@@ -74,6 +74,22 @@ class Transition:
                     conflict_list.append(box)
         return conflict_list
 
+    def conflicts_with_transitions(self, transitions):
+
+        def conflict(transition):
+            for segment1 in self.segments:
+                for segment2 in transition.segments:
+                    if intersect(segment1, segment2):
+                        return True
+            return False
+
+        conflict_list = []
+        for transition in transitions:
+            if self != transition:
+                if conflict(transition):
+                    conflict_list.append(transition)
+        return conflict_list
+
     def __str__(self):
         return "Transition : " + self.source.name + " -> " + self.target.name
 

@@ -5,6 +5,7 @@ from structures.segment import Segment, intersect, combined_segments, get_box_se
 from constraint_solver import Constraint
 from structures.box import Box
 from structures.box_elements import RootBox
+from structures.transition import Transition
 
 
 class TestSegment(unittest.TestCase):
@@ -57,6 +58,17 @@ class TestTransitions(unittest.TestCase):
                     self.assertEqual((segment.p1, segment.p2), (transition.polyline[i], transition.polyline[i + 1]))
                 else:
                     self.assertEqual((segment.p1, segment.p2), transition.coordinates)
+
+    def test_conflict(self):
+        t1 = Transition(Box('b1'), Box('b2'))
+        t2 = Transition(Box('b3'), Box('b4'))
+        t3 = Transition(Box('b4'), Box('b5'))
+
+        t1.polyline = [(0, 3), (6, 3), (6, 10)]
+        t2.polyline = [(3, 8), (3, 5), (5, 5), (5, 0)]
+        t3.update_coordinates(start=(6, 2), end=(6, 5))
+        self.assertEqual(intersect(Segment((0, 3), (6, 3)), Segment((5, 0), (5, 5))), (5, 3))
+        self.assertEqual([t2, t3], t1.conflicts_with_transitions([t2, t3]))
 
 
 class TestBoxElements(unittest.TestCase):
