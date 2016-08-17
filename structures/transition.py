@@ -1,10 +1,12 @@
 import math
+
 from structures.box import space
-from structures.segment import Segment
+from structures.segment import Segment, get_box_segments, intersect
+from typing import Tuple, Dict
 
 
 class Transition:
-    def __init__(self, source: object, target: object, guard: str = '', event: str = '', action: str = ''):
+    def __init__(self, source, target, guard: str = '', event: str = '', action: str = ''):
         self.source = source
         self.target = target
         self.guard = guard
@@ -35,6 +37,7 @@ class Transition:
         """
         :return: The list of segments that compose the Transition
         """
+
         def build(segments_list, i):
             if i >= len(self.polyline) - 1:
                 return segments_list
@@ -46,9 +49,32 @@ class Transition:
         else:
             return [Segment((self._x1, self._y1), (self._x2, self._y2))]
 
-    def update_coordinates(self, start, end):
+    def update_coordinates(self, start: Tuple[float, float], end: Tuple[float, float]):
+        """
+        Set the coordinates values
+        :param start: the transition starts at this point
+        :param end: the transition ends at this point
+        """
         (x1, y1), (x2, y2) = start, end
         self._x1, self._x2, self._y1, self._y2 = x1, x2, y1, y2
+
+    def conflicts_with_boxes(self, coordinates: Dict):
+
+        def box_conflict(box):
+            for segment1 in self.segments:
+                for segment2 in get_box_segments(box, coordinates):
+                    intersection = intersect(segment1, segment2)
+                    if intersection:
+                        return intersection
+            return False
+
+        conflict_list = []
+        for box in coordinates.keys():
+            if box not in self.target.ancestors and box != self.source and box != self.target:
+                conflict = box_conflict(box)
+                if conflict:
+                    conflict_list.append((box, conflict))
+        return conflict_list
 
     def __str__(self):
         return "Transition : " + self.source.name + " -> " + self.target.name
@@ -60,6 +86,7 @@ class Transition:
 def zone_of(box1, box2, coordinates):
     """
     box2 is ___ of box1
+    /!\ deprecated : use a RootBox with root_box.zone(box1, box2) instead
 
     :param box1: the box reference
     :param box2: the box to determine the zone

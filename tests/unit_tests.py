@@ -23,8 +23,6 @@ class TestSegment(unittest.TestCase):
         p1, p2 = combined.p1, combined.p2
         self.assertEqual(p1, (1, 4))
         self.assertEqual(p2, (1, 6))
-        p = intersect(Segment((1, 3), (1, 6)), Segment((1, 4), (1, 7)))
-        self.assertEqual(p, (1, (4, 6)))
         combined = combined_segments(Segment((3, 1), (6, 1)), Segment((4, 1), (7, 1)))
         self.assertEqual(combined.p1, (4, 1))
         self.assertEqual(combined.p2, (6, 1))

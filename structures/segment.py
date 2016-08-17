@@ -3,7 +3,7 @@ from typing import Dict, Tuple
 
 
 class Segment:
-    def __init__(self, point1: float, point2: float):
+    def __init__(self, point1: Tuple[float, float], point2: Tuple[float, float]):
         self._p1 = point1
         self._p2 = point2
 
@@ -46,11 +46,13 @@ class Segment:
 def combined_segments(segment1: Segment, segment2: Segment):
     (x1, y1), (x2, y2), (x3, y3), (x4, y4) = segment1.p1, segment1.p2, segment2.p1, segment2.p2
     if x1 == x2 == x3 == x4:
-        y1, y2 = tuple(sorted([y1, y2, y3, y4])[1:3])
-        return Segment((x1, y1), (x2, y2))
+        ya, yb = tuple(sorted([y1, y2, y3, y4])[1:3])
+        if (min(y1, y2) <= ya <= yb <= max(y1, y2)) or (min(y3, y4) <= ya <= yb <= max(y3, y4)):
+            return Segment((x1, ya), (x2, yb))
     elif y1 == y2 == y3 == y4:
-        x1, x2 = tuple(sorted([x1, x2, x3, x4])[1:3])
-        return Segment((x1, y1), (x2, y2))
+        xa, xb = tuple(sorted([x1, x2, x3, x4])[1:3])
+        if (min(x1, x2) <= xa <= xb <= max(x1, x2)) or (min(x3, x4) <= xa <= xb <= max(x3, x4)):
+            return Segment((xa, y1), (xb, y2))
     else:
         return False
 
@@ -59,36 +61,27 @@ def intersect(segment1: Segment, segment2: Segment):
     a = segment1.slope
     m = segment2.slope
     (x1, y1), (x2, y2), (x3, y3), (x4, y4) = segment1.p1, segment1.p2, segment2.p1, segment2.p2
-    if a == float('inf') and m == float('inf'):
-        if segment1.line == segment2.line:
-            return segment1.line, tuple(sorted([y1, y2, y3, y4])[1:3])
-        else:
-            return -float('inf'), float('inf')
+    if (a == float('inf') and m == float('inf')) or (a == 0 and m == 0):
+        return combined_segments(segment1, segment2)
     elif a == float('inf'):
         x, y = x1, segment2.line(x1)
-        if (y1 <= y <= y2) or (y2 <= y <= y1):
+        if ((y1 <= y <= y2) or (y2 <= y <= y1)) and ((x3 <= x1 <= x4) or (x3 >= x1 >= x4)):
             return x, y
         else:
-            return -float('inf'), float('inf')
+            return False
     elif m == float('inf'):
         x, y = x3, segment1.line(x3)
-        if (y3 <= y <= y4) or (y4 <= y <= y3):
+        if ((y3 <= y <= y4) or (y4 <= y <= y3)) and ((x1 <= x3 <= x2) or (x1 >= x3 >= x2)):
             return x, y
         else:
-            return -float('inf'), float('inf')
-    elif a == 0 and m == 0:
-        combined = combined_segments(segment1, segment2)
-        if combined:
-            return (combined.p1, combined.p2), y1
-        else:
-            return -float('inf'), float('inf')
+            return False
     else:
         x = ((y3 - m * x3) - (y1 - a * x1)) / (a - m)
         y = segment1.line(x)
         if (min(x1, x2, x3, x4) <= x <= max(x1, x2, x3, x4)) and (min(y1, y2, y3, y4) <= y <= max(y1, y2, y3, y4)):
             return x, y
         else:
-            return -float('inf'), float('inf')
+            return False
 
 
 def get_box_segments(box: Box, coordinates: Dict[Box, Tuple[float, float, float, float]]) -> \
