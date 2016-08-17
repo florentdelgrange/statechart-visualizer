@@ -1,5 +1,6 @@
 import math
 from structures.box import space
+from structures.segment import Segment
 
 
 class Transition:
@@ -14,6 +15,9 @@ class Transition:
 
     @property
     def coordinates(self):
+        """
+        :return: the coordinates of insert and end points
+        """
         if self.polyline:
             return self.polyline[0], self.polyline[-1]
         else:
@@ -21,7 +25,26 @@ class Transition:
 
     @property
     def is_downward_transition(self):
+        """
+        :return: True if the transition is downward, False otherwise
+        """
         return self.source in self.target.ancestors
+
+    @property
+    def segments(self):
+        """
+        :return: The list of segments that compose the Transition
+        """
+        def build(segments_list, i):
+            if i >= len(self.polyline) - 1:
+                return segments_list
+            else:
+                return build(segments_list + [Segment(self.polyline[i], self.polyline[i + 1])], i + 1)
+
+        if self.polyline:
+            return build([], 0)
+        else:
+            return [Segment((self._x1, self._y1), (self._x2, self._y2))]
 
     def update_coordinates(self, start, end):
         (x1, y1), (x2, y2) = start, end

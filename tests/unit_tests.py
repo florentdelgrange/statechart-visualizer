@@ -29,6 +29,28 @@ class TestSegment(unittest.TestCase):
         self.assertEqual(combined.p2, (6, 1))
 
 
+class TestTransitions(unittest.TestCase):
+    def setUp(self):
+        # The tests will be applied on the yaml file microwave
+        with open("tests/microwave.yaml", 'r') as stream:
+            statechart = io.import_from_yaml(stream)
+            assert isinstance(statechart, sismic.model.Statechart)
+        self.root_box = RootBox(statechart)
+        self.states = {}
+        for box in self.root_box.inner_states:
+            self.states[box.name] = box
+
+    def test_segment(self):
+        for transition in self.root_box.transitions:
+            segments = transition.segments
+            for i in range(len(segments)):
+                segment = segments[i]
+                if transition.polyline:
+                    self.assertEqual((segment.p1, segment.p2), (transition.polyline[i], transition.polyline[i+1]))
+                else:
+                    self.assertEqual((segment.p1, segment.p2), transition.coordinates)
+
+
 class TestBoxElements(unittest.TestCase):
     def setUp(self):
         # The tests will be applied on the yaml file microwave
