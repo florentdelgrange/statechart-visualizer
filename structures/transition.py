@@ -1,4 +1,5 @@
 import math
+import structures.box
 
 from structures.box import space
 from structures.segment import Segment, get_box_segments, intersect
@@ -349,3 +350,77 @@ def update_transitions_coordinates(transitions, coordinates):
                 transition.polyline = [(x2, (y1 + y2) / 2), (x2 + space, (y1 + y2) / 2),
                                        (x2 + space, y2 + space), ((x1 + x2) / 2, y2 + space),
                                        ((x1 + x2) / 2, y2)]
+
+
+def conflicts_checking(transitions, coordinates):
+    attractions_points = {}
+
+    def distance(p1, p2):
+        x1, y1 = p1
+        x2, y2 = p2
+        return math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
+
+    for transition in transitions:
+        if transition.conflicts_with_transitions(transitions) \
+                or transitions.conflict_with_boxes(coordinates.keys):
+            lower_common_ancestor = structures.box.lower_common_ancestor(transition.source, transition.target)
+            n, e, s, w = compute_attraction_points(lower_common_ancestor, coordinates)
+            if zone_of(transition.source, transition.target) == 'west':
+                points = [min([n, s, w], key=lambda x: attractions_points.get(x, 0))]
+                attractions_points[points[-1]] = attractions_points.get(attractions_points, 0) + 1
+                x1, y1, x2, y2 = coordinates[transition.source]
+                if points[-1] == n:
+                    points = [((x1 + x2) / 2, y1)]
+                    n1, n2 = n
+                    points += [((x1 + x2) / 2, n2)]
+                    points += n
+                if points[-1] == s:
+                    points = [((x1 + x2) / 2, y2)]
+                    s1, s2 = s
+                    points += [((x1 + x2) / 2, s2)]
+                    points += s
+                if points[-1] == w:
+                    points = [(x1, (y1 + y2) / 2)]
+                    w1, w2 = w
+                    points += [(w1, (y1 + y2) / 2)]
+                    points += w
+                    o = min([n, s], key=lambda x: attractions_points.get(x, 0))
+                    if points[-1] == n:
+                        points = [((x1 + x2) / 2, y1)] + points
+                    if points[-1] == s:
+                        points = [((x1 + x2) / 2, y2)] + points
+                x1, y1, x2, y2 = coordinates[transition.target]
+                mid = (x1 + x2) / 2
+                points += [min([(mid, y1), (mid, y2)], key=lambda x: distance(points[-1], x))]
+            elif zone_of(transition.source, transition.target) == 'east':
+                points = [min([n, s, e], key=lambda x: attractions_points.get(x, 0))]
+                attractions_points[points[-1]] = attractions_points.get(attractions_points, 0) + 1
+                if points[-1] == e:
+                    points += [min([n, s], key=lambda x: attractions_points.get(x, 0))]
+                x1, y1, x2, y2 = coordinates[transition.target]
+                mid = (x1 + x2) / 2
+                points += [min([(mid, y1), (mid, y2)], key=lambda x: distance(points[-1], x))]
+            elif zone_of(transition.source, transition.target) == 'north':
+                points = [min([s, e, w], key=lambda x: attractions_points.get(x, 0))]
+                attractions_points[points[-1]] = attractions_points.get(attractions_points, 0) + 1
+                if points[-1] == n:
+                    points += [min([e, w], key=lambda x: attractions_points.get(x, 0))]
+                x1, y1, x2, y2 = coordinates[transition.target]
+                mid = (y1 + y2) / 2
+                points += [min([(x1, mid), (x2, mid)], key=lambda x: distance(points[-1], x))]
+            else:
+                points = [min([n, e, w], key=lambda x: attractions_points.get(x, 0))]
+                attractions_points[points[-1]] = attractions_points.get(attractions_points, 0) + 1
+                if points[-1] == s:
+                    points += [min([e, w], key=lambda x: attractions_points.get(x, 0))]
+                x1, y1, x2, y2 = coordinates[transition.target]
+                mid = (y1 + y2) / 2
+                points += [min([(x1, mid), (x2, mid)], key=lambda x: distance(points[-1], x))]
+
+
+def compute_attraction_points(box, coordinates):
+    x1, y1, x2, y2 = coordinates[box]
+    y1 += box.header
+    mid_x = (x1 + x2) / 2
+    mid_y = (y1 + y2) / 2
+    return (mid_x, y1 + space / 2), (x2 - space / 2, mid_y), (mid_x, y2 - space / 2), (x1 + space / 2, mid_y)
