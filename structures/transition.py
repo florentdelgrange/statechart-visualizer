@@ -270,7 +270,7 @@ def classic_arrow(transition, coordinates):
         return [(x2, y), (x, y), (x, y3)]
 
 
-def update_transitions_coordinates(transitions, coordinates):
+def update_transitions_coordinates(transitions, coordinates, conflicts_checking_phase=True):
     for transition in transitions:
         # First check if it is possible to draw directly a transition in with one line.
         source = transition.source
@@ -350,7 +350,16 @@ def update_transitions_coordinates(transitions, coordinates):
                 transition.polyline = [(x2, (y1 + y2) / 2), (x2 + space, (y1 + y2) / 2),
                                        (x2 + space, y2 + space), ((x1 + x2) / 2, y2 + space),
                                        ((x1 + x2) / 2, y2)]
-    conflicts_checking(transitions, coordinates)
+    if conflicts_checking_phase:
+        conflicts_old = sum(map(lambda t: 2 * len(t.conflicts_with_boxes(coordinates)) + \
+                                          len(t.conflicts_with_transitions(transitions)),
+                                transitions))
+        conflicts_checking(transitions, coordinates)
+        conflicts_new = sum(map(lambda t: 2 * len(t.conflicts_with_boxes(coordinates)) + \
+                                          len(t.conflicts_with_transitions(transitions)),
+                                transitions))
+        if conflicts_old < conflicts_new:
+            update_transitions_coordinates(transitions, coordinates, conflicts_checking_phase=False)
 
 
 def conflicts_checking(transitions, coordinates):
