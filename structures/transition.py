@@ -358,13 +358,13 @@ def conflicts_checking(transitions, coordinates):
 
     for transition in transitions:
         if (transition.conflicts_with_transitions(transitions) \
-                or transition.conflicts_with_boxes(coordinates)) \
+                    or transition.conflicts_with_boxes(coordinates)) \
                 and transition.source != transition.target:
             lower_common_ancestor = structures.box.lower_common_ancestor(transition.source, transition.target)
             n, e, s, w = compute_attraction_points(lower_common_ancestor, coordinates)
             if zone(transition.source, transition.target, coordinates) == 'west':
                 x1, y1, x2, y2 = coordinates[transition.source]
-                if x1 <= n[0]:
+                if x1 < n[0]:
                     points = [min([n, s, w], key=lambda x: attractions_points.get(x, 0))]
                     attractions_points[points[-1]] = attractions_points.get(points[-1], 0) + 1
                     if points[-1] == w:
@@ -373,15 +373,20 @@ def conflicts_checking(transitions, coordinates):
                         points += [(w1, (y1 + y2) / 2)]
                         # points += [w]
                         points += [min([n, s], key=lambda x: attractions_points.get(x, 0))]
+                        attractions_points[points[-1]] = attractions_points.get(points[-1], 0) + 1
                     if points[-1] == n:
                         if len(points) == 1:
                             points = [((x1 + x2) / 2, y1)]
+                        else:
+                            points.pop()
                         n1, n2 = n
                         points += [(points[-1][0], n2)]
                         points += [n]
                     elif points[-1] == s:
                         if len(points) == 1:
                             points = [((x1 + x2) / 2, y2)]
+                        else:
+                            points.pop()
                         s1, s2 = s
                         points += [(points[-1][0], s2)]
                         points += [s]
@@ -402,10 +407,11 @@ def conflicts_checking(transitions, coordinates):
                 mid = (x1 + x2) / 2
                 a1, a2 = points[-1]
                 b1, b2 = min([(mid, y1), (mid, y2)], key=lambda x: distance(points[-1], x))
+                points.pop()
                 points += [(b1, a2), (b1, b2)]
             elif zone(transition.source, transition.target, coordinates) == 'east':
                 x1, y1, x2, y2 = coordinates[transition.source]
-                if x1 >= n[0]:
+                if x1 > n[0]:
                     points = [min([n, s, e], key=lambda x: attractions_points.get(x, 0))]
                     attractions_points[points[-1]] = attractions_points.get(points[-1], 0) + 1
                     if points[-1] == e:
@@ -414,15 +420,20 @@ def conflicts_checking(transitions, coordinates):
                         points += [(e1, (y1 + y2) / 2)]
                         # points += [e]
                         points += [min([n, s], key=lambda x: attractions_points.get(x, 0))]
+                        attractions_points[points[-1]] = attractions_points.get(points[-1], 0) + 1
                     if points[-1] == n:
                         if len(points) == 1:
                             points = [((x1 + x2) / 2, y1)]
+                        else:
+                            points.pop()
                         n1, n2 = n
                         points += [(points[-1][0], n2)]
                         points += [n]
                     elif points[-1] == s:
                         if len(points) == 1:
                             points = [((x1 + x2) / 2, y2)]
+                        else:
+                            points.pop()
                         s1, s2 = s
                         points += [(points[-1][0], s2)]
                         points += [s]
@@ -430,23 +441,24 @@ def conflicts_checking(transitions, coordinates):
                     points = [min([n, s], key=lambda x: attractions_points.get(x, 0))]
                     attractions_points[points[-1]] = attractions_points.get(points[-1], 0) + 1
                     if points[-1] == n:
-                        points = [(x1, (y1 + y2) / 2)]
+                        points = [((x1 + x2) / 2, y1)]
                         n1, n2 = n
-                        points += [(x1, n2)]
+                        points += [((x1 + x2) / 2, n2)]
                         points += [n]
                     elif points[-1] == s:
-                        points = [(x2, (y1 + y2) / 2)]
+                        points = [((x1 + x2) / 2, y2)]
                         s1, s2 = s
-                        points += [(x2, s2)]
+                        points += [((x1 + x2) / 2, s2)]
                         points += [s]
                 x1, y1, x2, y2 = coordinates[transition.target]
                 mid = (x1 + x2) / 2
                 a1, a2 = points[-1]
                 b1, b2 = min([(mid, y1), (mid, y2)], key=lambda x: distance(points[-1], x))
+                points.pop()
                 points += [(b1, a2), (b1, b2)]
             elif zone(transition.source, transition.target, coordinates) == 'north':
                 x1, y1, x2, y2 = coordinates[transition.source]
-                if y1 <= w[1]:
+                if y1 < w[1]:
                     points = [min([n, w, e], key=lambda x: attractions_points.get(x, 0))]
                     attractions_points[points[-1]] = attractions_points.get(points[-1], 0) + 1
                     if points[-1] == n:
@@ -455,15 +467,20 @@ def conflicts_checking(transitions, coordinates):
                         points += [((x1 + x2) / 2, n2)]
                         # points += [n]
                         points += [min([e, w], key=lambda x: attractions_points.get(x, 0))]
+                        attractions_points[points[-1]] = attractions_points.get(points[-1], 0) + 1
                     if points[-1] == w:
                         if len(points) == 1:
                             points = [(x1, (y1 + y2) / 2)]
+                        else:
+                            points.pop()
                         w1, w2 = w
                         points += [(w1, points[-1][1])]
                         points += [w]
                     elif points[-1] == e:
                         if len(points) == 1:
                             points = [(x2, (y1 + y2) / 2)]
+                        else:
+                            points.pop()
                         e1, e2 = e
                         points += [(e1, points[-1][1])]
                         points += [e]
@@ -471,23 +488,24 @@ def conflicts_checking(transitions, coordinates):
                     points = [min([w, e], key=lambda x: attractions_points.get(x, 0))]
                     attractions_points[points[-1]] = attractions_points.get(points[-1], 0) + 1
                     if points[-1] == w:
-                        points = [((x2 + x2) / 2, y1)]
+                        points = [(x1, (y1 + y2) / 2)]
                         w1, w2 = w
-                        points += [(w1, y1)]
+                        points += [(w1, (y1 + y2) / 2)]
                         points += [w]
                     elif points[-1] == e:
-                        points = [((x1 + x2) / 2, y2)]
+                        points = [(x2, (y1 + y2) / 2)]
                         e1, e2 = e
-                        points += [(e1, y2)]
+                        points += [(e1, (y1 + y2) / 2)]
                         points += [e]
                 x1, y1, x2, y2 = coordinates[transition.target]
                 mid = (y1 + y2) / 2
                 a1, a2 = points[-1]
                 b1, b2 = min([(x1, mid), (x2, mid)], key=lambda x: distance(points[-1], x))
+                points.pop()
                 points += [(a1, b2), (b1, b2)]
             else:
                 x1, y1, x2, y2 = coordinates[transition.source]
-                if y1 >= w[1]:
+                if y1 > w[1]:
                     points = [min([s, w, e], key=lambda x: attractions_points.get(x, 0))]
                     attractions_points[points[-1]] = attractions_points.get(points[-1], 0) + 1
                     if points[-1] == s:
@@ -496,15 +514,20 @@ def conflicts_checking(transitions, coordinates):
                         points += [((x1 + x2) / 2, s2)]
                         # points += [s]
                         points += [min([e, w], key=lambda x: attractions_points.get(x, 0))]
+                        attractions_points[points[-1]] = attractions_points.get(points[-1], 0) + 1
                     if points[-1] == w:
                         if len(points) == 1:
                             points = [(x1, (y1 + y2) / 2)]
+                        else:
+                            points.pop()
                         w1, w2 = w
                         points += [(w1, points[-1][1])]
                         points += [w]
                     elif points[-1] == e:
                         if len(points) == 1:
                             points = [(x2, (y1 + y2) / 2)]
+                        else:
+                            points.pop()
                         e1, e2 = e
                         points += [(e1, points[-1][1])]
                         points += [e]
@@ -512,19 +535,20 @@ def conflicts_checking(transitions, coordinates):
                     points = [min([w, e], key=lambda x: attractions_points.get(x, 0))]
                     attractions_points[points[-1]] = attractions_points.get(points[-1], 0) + 1
                     if points[-1] == w:
-                        points = [((x1 + x2) / 2, y1)]
+                        points = [(x1, (y1 + y2) / 2)]
                         w1, w2 = w
-                        points += [(w1, y1)]
+                        points += [(w1, (y1 + y2) / 2)]
                         points += [w]
                     elif points[-1] == e:
-                        points = [((x1 + x2) / 2, y2)]
+                        points = [(x2, (y1 + y2) / 2)]
                         e1, e2 = e
-                        points += [(e1, y2)]
+                        points += [(e1, (y1 + y2) / 2)]
                         points += [e]
                 x1, y1, x2, y2 = coordinates[transition.target]
                 mid = (y1 + y2) / 2
                 a1, a2 = points[-1]
                 b1, b2 = min([(x1, mid), (x2, mid)], key=lambda x: distance(points[-1], x))
+                points.pop()
                 points += [(a1, b2), (b1, b2)]
             transition.polyline = points
 
@@ -540,7 +564,7 @@ def compute_attraction_points(box, coordinates):
 def distance(p1, p2):
     x1, y1 = p1
     x2, y2 = p2
-    return math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
+    return math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
 
 
 def zone(box1, box2, coordinates):
