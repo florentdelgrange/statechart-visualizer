@@ -28,6 +28,18 @@ class Segment:
             return (y2 - y1) / (x2 - x1)
 
     @property
+    def is_horizontal(self):
+        x1, y1 = self._p1
+        x2, y2 = self._p2
+        return y1 == y2
+
+    @property
+    def is_vertical(self):
+        x1, y1 = self._p1
+        x2, y2 = self._p2
+        return x1 == x2
+
+    @property
     def line(self):
         """
         warning : convention : if slope is inf then return the abscissa
