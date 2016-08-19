@@ -1,5 +1,6 @@
 import svgwrite
 from structures.box import Box, radius, char_width, char_height
+from structures.box_elements import RootBox
 
 normal_style = "font-size:25;font-family:Arial"
 italic_style = "font-size:25;font-family:Arial;font-style:oblique"
@@ -54,10 +55,14 @@ def render_box(box: Box, coordinates):
     # This draws the 'on entry' zone
     w, h = box.entry_position(insert)
     if box.entry != '':
-        g.add(svgwrite.text.Text("entry / ", insert=(w, h), style=italic_style, textLength=8 * char_width))
+        if not isinstance(box, RootBox):
+            g.add(svgwrite.text.Text("entry / ", insert=(w, h), style=italic_style, textLength=8 * char_width))
+            init_len = 9 * char_width
+        else:
+            init_len = 0
         i = 0
         for entry in box.entry.split('\n'):
-            g.add(svgwrite.text.Text(entry, insert=(w + 9 * char_width, h + char_height * i), style=normal_style,
+            g.add(svgwrite.text.Text(entry, insert=(w + init_len, h + char_height * i), style=normal_style,
                                      textLength=len(entry) * char_width))
             i += 1
 
