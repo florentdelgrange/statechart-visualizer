@@ -1,5 +1,7 @@
 import constraint_solver
 from constraint_solver import Constraint
+import math
+from typing import Dict, Tuple
 
 char_width, char_height, space, radius = 10, 20, 20, 20
 
@@ -465,3 +467,43 @@ def lower_common_ancestor(box1: Box, box2: Box):
     ancestors_box1 = [box1] + box1.ancestors
     ancestors_box2 = [box2] + box2.ancestors
     return next(filter(lambda x: x in ancestors_box2, ancestors_box1))
+
+
+def distance(p1, p2):
+    """
+    Compute the distance between 2 points.
+    :param p1: the point1
+    :param p2: the point2
+    :return: the distance between the point1 and the point2
+    """
+    x1, y1 = p1
+    x2, y2 = p2
+    return math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
+
+
+def zone(box1: Box, box2: Box, coordinates: Dict[Box, Tuple[float, float, float, float]]):
+    """
+    Compute the zone of the box1 compared to the box2
+    :param box1: the first box
+    :param box2: the second box
+    :param coordinates: the coordinates dict linking boxes with their coordinates
+    :return: the zone of the box1 compared to the box2 {'north' | 'east' | 'south' | 'west'}
+    """
+    x1, y1, x2, y2 = coordinates[box1]
+    x3, y3, x4, y4 = coordinates[box2]
+    x1, y1 = (x1 + x2) / 2, (y1 + y2) / 2
+    x2, y2 = (x3 + x4) / 2, (y3 + y4) / 2
+    if distance((x1, y1), (x2, y2)) == 0:
+        return False
+    cos = (x2 - x1) / distance((x1, y1), (x2, y2))
+    sin = (y2 - y1) / distance((x1, y1), (x2, y2))
+    if math.fabs(cos) >= math.sqrt(2) / 2:
+        if cos >= 0:
+            return 'west'
+        else:
+            return 'east'
+    else:
+        if sin >= 0:
+            return 'north'
+        else:
+            return 'south'

@@ -1,5 +1,4 @@
-from cassowary import STRONG
-from cassowary import SimplexSolver, Variable, WEAK
+from cassowary import SimplexSolver, Variable, WEAK, STRONG
 
 space = 20
 

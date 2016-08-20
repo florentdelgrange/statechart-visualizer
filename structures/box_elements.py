@@ -1,5 +1,3 @@
-import math
-
 from structures.box import Box, radius
 from structures.transition import Transition, update_transitions_coordinates
 import sismic
@@ -137,7 +135,7 @@ class RootBox(Box):
         example : if zone(box1, box2) returns ['south', 'east'] it means that box1 is south east of box2.
         :param box1: the first box (must be in the inner boxes)
         :param box2: the second box (must be in the inner boxes)
-        :return: the zone of the box1 compared to the box2
+        :return: a list containing precisely the zone of the box1 compared to the box2.
         """
         coordinates = self.coordinates
         x1, y1, x2, y2 = coordinates[box1]

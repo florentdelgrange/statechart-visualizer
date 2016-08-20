@@ -1,7 +1,7 @@
 import math
 import structures.box
 
-from structures.box import space
+from structures.box import space, distance, zone
 from structures.segment import Segment, get_box_segments, intersect
 from typing import Tuple, Dict
 
@@ -568,30 +568,3 @@ def compute_attraction_points(box, coordinates):
     mid_x = (x1 + x2) / 2
     mid_y = (y1 + y2) / 2
     return (mid_x, y1 + space / 2), (x2 - space / 2, mid_y), (mid_x, y2 - space / 2), (x1 + space / 2, mid_y)
-
-
-def distance(p1, p2):
-    x1, y1 = p1
-    x2, y2 = p2
-    return math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
-
-
-def zone(box1, box2, coordinates):
-    x1, y1, x2, y2 = coordinates[box1]
-    x3, y3, x4, y4 = coordinates[box2]
-    x1, y1 = (x1 + x2) / 2, (y1 + y2) / 2
-    x2, y2 = (x3 + x4) / 2, (y3 + y4) / 2
-    if distance((x1, y1), (x2, y2)) == 0:
-        return False
-    cos = (x2 - x1) / distance((x1, y1), (x2, y2))
-    sin = (y2 - y1) / distance((x1, y1), (x2, y2))
-    if math.fabs(cos) >= math.sqrt(2) / 2:
-        if cos >= 0:
-            return 'west'
-        else:
-            return 'east'
-    else:
-        if sin >= 0:
-            return 'north'
-        else:
-            return 'south'
