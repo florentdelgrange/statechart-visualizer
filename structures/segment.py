@@ -1,4 +1,6 @@
-from structures.box import Box
+import math
+
+from structures.box import Box, distance
 from typing import Dict, Tuple
 
 
@@ -50,6 +52,11 @@ class Segment:
             return lambda x: self.slope * x + (y1 - self.slope * x1)
         else:
             return x1
+
+    @property
+    def length(self):
+        (x1, y1), (x2, y2) = self._p1, self._p2
+        return distance((x2 - x1), (y2 - y1))
 
     def __repr__(self):
         return 'Segment ' + self._p1.__repr__() + ", " + self._p2.__repr__()

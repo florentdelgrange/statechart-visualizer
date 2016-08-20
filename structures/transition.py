@@ -1,9 +1,9 @@
 import math
 import structures.box
 
-from structures.box import space, distance, zone
+from structures.box import space, distance, zone, char_width, char_height
 from structures.segment import Segment, get_box_segments, intersect
-from typing import Tuple, Dict
+from typing import Tuple, Dict, List
 
 
 class Transition:
@@ -34,7 +34,7 @@ class Transition:
         return self.source in self.target.ancestors
 
     @property
-    def segments(self):
+    def segments(self) -> List[Segment]:
         """
         :return: The list of segments that compose the Transition
         """
@@ -103,6 +103,35 @@ class Transition:
                     conflict_list.append(transition)
         return conflict_list
 
+    def get_text_and_zone(self, coordinates):
+        possibilities = []
+        text = TextZone(self.guard, self.action, self.event)
+        for segment in self.segments:
+            possibilities += text.coordinates_possibilities(segment)
+
+        def compute_text_dimension(dict) -> Tuple[float, float, float, float]:
+            keys = dict.keys()
+            x1, y1 = min(map(lambda key: dict[key][0], keys)), min(map(lambda key: dict[key][1] - char_height, keys))
+            x2, y2 = max(map(lambda key: dict[key][0] + max(map(lambda x: len(x) * char_width, keys)), keys)), \
+                     max(map(lambda key: dict[key][1], keys))
+            return x1, y1, x2, y2
+
+        def segments_zone(dict):
+            x1, y1, x2, y2 = compute_text_dimension(dict)
+            return Segment((x1, y1), (x1, y2)), Segment((x1, y1), (x2, y1)), \
+                   Segment((x2, y1), (x2, y2)), Segment((x1, y2), (x2, y2))
+
+        def count_intersections(dict):
+            counter = 0
+            for box in coordinates.keys():
+                for segment1 in segments_zone(dict):
+                    for segment2 in get_box_segments(box):
+                        if intersect(segment1, segment2):
+                            counter += 1
+            return counter
+
+        return min(possibilities, key=lambda dict: count_intersections(dict))
+
     def __str__(self):
         return "Transition : " + self.source.name + " -> " + self.target.name
 
@@ -110,15 +139,105 @@ class Transition:
         return self.__str__()
 
 
+class TextZone:
+    def __init__(self, guard: str, action: str, event: str):
+        self._elements = ['[' + guard + '] / ' + action + ' ' + event]
+        self._guard = guard
+        self._action = action
+        self._event = event
+
+    def split(self):
+        elements = self.elements
+        if len(elements) == 1:
+            elements = ['[' + self._guard + ']', '/ ' + self._action + ' ' + self._event]
+            if '/ ' in elements:
+                elements.remove('/  ')
+        elif len(elements) == 2:
+            elements = ['[' + self._guard + ']', '/ ' + self._action, self._event]
+            if '/ ' in elements:
+                elements.remove('/ ')
+            if '' in elements:
+                elements.remove('')
+        text_zone = TextZone(self._guard, self._action, self._event)
+        text_zone._elements = elements
+        return text_zone
+
+    @property
+    def elements(self) -> List[str]:
+        return self._elements[:]
+
+    @property
+    def dimension(self) -> Tuple[float, float]:
+        return max(map(lambda x: len(x) * char_width, self._elements)), sum(map(lambda x: char_height, self._elements))
+
+    def coordinates_possibilities(self, segment: Segment) -> List[Dict[str, (float, float)]]:
+        """
+        Compute the different possibilities of arranging the text next to the segment in parameter.
+        Note that this text zone can be split for this segment.
+
+        :param segment: the segment around which the computation will be based
+        :return: the list of coordinates possibilities for the text
+        """
+        possibilities = []
+        text_zone = TextZone(self._guard, self._action, self._elements)
+        insert = segment.p1
+        end = segment.p2
+        if segment.is_horizontal:
+            x = min(insert[0], end[0]) + space / 2
+            y = insert[1]
+            if segment.length - space < text_zone.dimension[0]:
+                text_zone = text_zone.split()
+            if segment.length - space < text_zone.dimension[0]:
+                text_zone = text_zone.split()
+            coordinates = {}
+            for i in range(len(text_zone._elements)):
+                element = text_zone._elements[i]
+                coordinates[element] = (x, y * (i + 1) + space / 2 + char_height)
+            possibilities += [coordinates]
+            for i in range(len(text_zone._elements)):
+                coordinates = {}
+                for j in range(len(text_zone._elements)):
+                    element = text_zone._elements[j]
+                    if i == j:
+                        coordinates[element] = (x, possibilities[-1][element] + char_height + space)
+                    else:
+                        coordinates[element] = (x, possibilities[-1][element] + char_height)
+                possibilities += [coordinates]
+        elif segment.is_vertical:
+            x = insert[0]
+            y = min(insert[1], end[1]) + space / 2
+            if segment.length - space >= 2 * char_height:
+                text_zone = text_zone.split()
+            if segment.length - space >= 3 * char_height:
+                text_zone = text_zone.split()
+            coordinates1 = {}
+            coordinates2 = {}
+            for i in range(len(text_zone._elements)):
+                element = text_zone._elements[i]
+                coordinates1[element] = (x - space / 2 - text_zone.dimension[0], y + (i + 1) * char_height)
+                coordinates2[element] = (x + space / 2, y + (i + 1) * char_height)
+            possibilities = [coordinates1, coordinates2]
+        return possibilities
+
+
+"""
+This part of code concerns the computation of the transitions' coordinates to draw
+them with a polyline or with a direct line.
+"""
+
+
 def zone_of(box1, box2, coordinates):
     """
     box2 is ___ of box1
-    /!\ deprecated : use a RootBox with root_box.zone(box1, box2) instead
+
+    /!\ deprecated : use a RootBox with root_box.zone(box1, box2)
+    or structure.box.zone(box1, box2) instead.
 
     :param box1: the box reference
     :param box2: the box to determine the zone
     :param coordinates: the coordinates dictionary Dict[Box: (int, int)]
     :return: the area of box number 2 relative to the box number 1
+             in {'northeast' | 'northwest' | 'southeast' | 'southwest'}
     """
     x1, y1, x2, y2 = coordinates[box1]
     x3, y3, x4, y4 = coordinates[box2]
