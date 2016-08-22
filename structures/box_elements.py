@@ -58,7 +58,8 @@ class RootBox(Box):
             # now check the transitions
             transitions = statechart.transitions_from(state.name)
             transitions = map(
-                lambda t: Transition(source=box, target=next(x for x in self._inner_states if x.name == t.target)),
+                lambda t: Transition(source=box, target=next(x for x in self._inner_states if x.name == t.target),\
+                                     guard=t.guard, action=t.action, event=t.event),
                 transitions)
 
             if isinstance(state, OrthogonalState):

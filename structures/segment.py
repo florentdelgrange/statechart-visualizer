@@ -55,8 +55,7 @@ class Segment:
 
     @property
     def length(self):
-        (x1, y1), (x2, y2) = self._p1, self._p2
-        return distance((x2 - x1), (y2 - y1))
+        return distance(self.p1, self.p2)
 
     def __repr__(self):
         return 'Segment ' + self._p1.__repr__() + ", " + self._p2.__repr__()

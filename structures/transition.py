@@ -1,18 +1,20 @@
 import math
 import structures.box
-
 from structures.box import space, distance, zone, char_width, char_height
 from structures.segment import Segment, get_box_segments, intersect
 from typing import Tuple, Dict, List
+
+
 
 
 class Transition:
     def __init__(self, source, target, guard: str = '', event: str = '', action: str = ''):
         self.source = source
         self.target = target
-        self.guard = guard
-        self.event = event
-        self.action = action
+        if_not_none = lambda x: {None: ''}.get(x, x)
+        self.guard = if_not_none(guard)
+        self.event = if_not_none(event)
+        self.action = if_not_none(action)
         self._x1, self._x2, self._y1, self._y2 = 0, 0, 0, 0
         self.polyline = []
 
@@ -103,9 +105,12 @@ class Transition:
                     conflict_list.append(transition)
         return conflict_list
 
-    def get_text_and_zone(self, coordinates):
+    def get_text_and_zone(self, coordinates, transitions):
         possibilities = []
         text = TextZone(self.guard, self.action, self.event)
+        if self.guard == '' and self.event == '':
+            return {}
+
         for segment in self.segments:
             possibilities += text.coordinates_possibilities(segment)
 
@@ -125,7 +130,12 @@ class Transition:
             counter = 0
             for box in coordinates.keys():
                 for segment1 in segments_zone(dict):
-                    for segment2 in get_box_segments(box):
+                    for segment2 in get_box_segments(box, coordinates):
+                        if intersect(segment1, segment2):
+                            counter += 1
+            for transition in transitions:
+                for segment1 in segments_zone(dict):
+                    for segment2 in transition.segments:
                         if intersect(segment1, segment2):
                             counter += 1
             return counter
@@ -141,24 +151,28 @@ class Transition:
 
 class TextZone:
     def __init__(self, guard: str, action: str, event: str):
-        self._elements = ['[' + guard + '] / ' + action + ' ' + event]
-        self._guard = guard
-        self._action = action
+        self._guard = {'': ''}.get(guard, '[' + guard + ']')
+        self._action = {'': ''}.get(action, ' / ' + action)
         self._event = event
+        self._elements = [self._event + self._guard + self._action]
 
     def split(self):
         elements = self.elements
         if len(elements) == 1:
-            elements = ['[' + self._guard + ']', '/ ' + self._action + ' ' + self._event]
-            if '/ ' in elements:
-                elements.remove('/  ')
-        elif len(elements) == 2:
-            elements = ['[' + self._guard + ']', '/ ' + self._action, self._event]
+            elements = [self._event + self._guard, self._action[1:]]
             if '/ ' in elements:
                 elements.remove('/ ')
             if '' in elements:
                 elements.remove('')
-        text_zone = TextZone(self._guard, self._action, self._event)
+        elif len(elements) == 2:
+            elements = [self._event, self._guard, self._action[1:]]
+            if '/ ' in elements:
+                elements.remove('/ ')
+            if '' in elements:
+                elements.remove('')
+        text_zone = TextZone('', '', self._event)
+        text_zone._guard = self._guard
+        text_zone._action = self._action
         text_zone._elements = elements
         return text_zone
 
@@ -170,7 +184,7 @@ class TextZone:
     def dimension(self) -> Tuple[float, float]:
         return max(map(lambda x: len(x) * char_width, self._elements)), sum(map(lambda x: char_height, self._elements))
 
-    def coordinates_possibilities(self, segment: Segment) -> List[Dict[str, (float, float)]]:
+    def coordinates_possibilities(self, segment: Segment):
         """
         Compute the different possibilities of arranging the text next to the segment in parameter.
         Note that this text zone can be split for this segment.
@@ -179,7 +193,7 @@ class TextZone:
         :return: the list of coordinates possibilities for the text
         """
         possibilities = []
-        text_zone = TextZone(self._guard, self._action, self._elements)
+        text_zone = self
         insert = segment.p1
         end = segment.p2
         if segment.is_horizontal:
@@ -192,16 +206,16 @@ class TextZone:
             coordinates = {}
             for i in range(len(text_zone._elements)):
                 element = text_zone._elements[i]
-                coordinates[element] = (x, y * (i + 1) + space / 2 + char_height)
+                coordinates[element] = (x, y + space / 2 + char_height * (i + 1))
             possibilities += [coordinates]
             for i in range(len(text_zone._elements)):
                 coordinates = {}
                 for j in range(len(text_zone._elements)):
                     element = text_zone._elements[j]
                     if i == j:
-                        coordinates[element] = (x, possibilities[-1][element] + char_height + space)
+                        coordinates[element] = (x, possibilities[-1][element][1] - char_height - space)
                     else:
-                        coordinates[element] = (x, possibilities[-1][element] + char_height)
+                        coordinates[element] = (x, possibilities[-1][element][1] - char_height)
                 possibilities += [coordinates]
         elif segment.is_vertical:
             x = insert[0]

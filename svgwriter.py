@@ -83,17 +83,23 @@ def render_box(box: Box, coordinates):
     return g
 
 
-def render_transitions(transitions):
+def render_transitions(transitions, coordinates):
     lines = []
     for t in transitions:
+        g = svgwrite.container.Group()
         if t.polyline:
-            lines += [
-                svgwrite.shapes.Polyline(points=t.polyline, stroke='black', stroke_width=1, fill="none",
-                                         marker_end="url(#arrow)")]
+            g.add(svgwrite.shapes.Polyline(points=t.polyline, stroke='black', stroke_width=1, fill="none",
+                                           marker_end="url(#arrow)"))
         else:
             (x1, y1), (x2, y2) = t.coordinates
-            lines += [svgwrite.shapes.Line(start=(x1, y1), end=(x2, y2), stroke='black', stroke_width=1,
-                                           marker_end="url(#arrow)")]
+            g.add(svgwrite.shapes.Line(start=(x1, y1), end=(x2, y2), stroke='black', stroke_width=1,
+                                       marker_end="url(#arrow)"))
+        dict = t.get_text_and_zone(coordinates, transitions)
+        for text in dict.keys():
+            g.add(
+                svgwrite.text.Text(text, insert=dict[text], style=normal_style, textLength=len(text) * char_width))
+        lines += [g]
+
     return lines
 
 
@@ -104,12 +110,13 @@ def export(box: Box):
     :param box: the box that will be on the svg file
     """
     dwg = svgwrite.Drawing(box.name + ".svg", size=(box.width, box.height))
-    dwg.add(render_box(box, box.coordinates))
+    coordinates = box.coordinates
+    dwg.add(render_box(box, coordinates))
     marker = svgwrite.container.Marker(insert=(8, 3), orient='auto', markerWidth=30, markerHeight=20,
                                        id="arrow")
     path = svgwrite.path.Path(d="M0,0 L0,6 L9,3 z")
     marker.add(path)
     dwg.defs.add(marker)
-    for transition in render_transitions(box.transitions):
+    for transition in render_transitions(box.transitions, coordinates):
         dwg.add(transition)
     dwg.save()
