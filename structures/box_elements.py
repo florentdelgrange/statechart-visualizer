@@ -58,7 +58,7 @@ class RootBox(Box):
             # now check the transitions
             transitions = statechart.transitions_from(state.name)
             transitions = map(
-                lambda t: Transition(source=box, target=next(x for x in self._inner_states if x.name == t.target), \
+                lambda t: Transition(source=box, target=next((x for x in self._inner_states if x.name == t.target), box), \
                                      guard=t.guard, action=t.action, event=t.event),
                 transitions)
 
@@ -100,27 +100,37 @@ class RootBox(Box):
         coordinates = self.coordinates
         update_transitions_coordinates(transitions, coordinates)
 
-        for transition in transitions:
+        for box in self._inner_states:
             x1, y1, x2, y2 = 0, 0, 0, 0
-            source = transition.source
-            target = transition.target
-            text_len = max(len(transition.guard) * char_width, \
-                           len(transition.event) * char_width, \
-                           len(transition.action) * char_width) + space / 2
-            if source == target:
-                if source.zone == 'north' or source.zone == 'west':
-                    x1 += space + text_len
-                    y1 += space
+            for transition in box.transitions:
+                source = transition.source
+                target = transition.target
+                text_width = max(len(transition.guard) * char_width, \
+                               len(transition.event) * char_width, \
+                               len(transition.action) * char_width) + space
+                x3, y3, x4, y4 = target._additional_space
+                if source == target:
+                    if source.zone == 'north' or source.zone == 'west':
+                        x1 = max(x1, space + text_width)
+                        y1 = space
+                    else:
+                        x2 = max(x2, space + text_width)
+                        y2 = space
                 else:
-                    x2 += space + text_len
-                    y2 += space
-            else:
-                zone = self.zone(target, source)
-                if 'west' in zone:
-                    x1 += text_len
-                elif 'east' in zone:
-                    x2 += text_len
-            source._additional_space = x1, y1, x2, y2
+                    zone = self.zone(target, source)
+                    if 'west' in zone:
+                        if x4 >= text_width:
+                            text_width = 0
+                        x1 = max(x1, text_width)
+                    elif 'east' in zone:
+                        if x3 >= text_width:
+                            text_width = 0
+                        x2 = max(x2, text_width)
+                    if 'north' in zone:
+                        y1 = max(y1, char_height)
+                    elif 'south' in zone:
+                        y2 = max(y2, char_height)
+                source._additional_space = x1, y1, x2, y2
         return transitions
 
     @property

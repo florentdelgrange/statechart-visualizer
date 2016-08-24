@@ -109,8 +109,13 @@ class Transition:
         if self.guard == '' and self.event == '':
             return {}
 
-        for segment in self.segments:
-            possibilities += text.coordinates_possibilities(segment)
+        if self.target != self.source:
+            for segment in self.segments:
+                possibilities += text.coordinates_possibilities(segment)
+        else:
+            possibilities += text.coordinates_possibilities(
+                max(filter(lambda segment: segment.is_vertical, self.segments), key=lambda segment: segment.length)
+            )
 
         def compute_text_dimension(dict) -> Tuple[float, float, float, float]:
             keys = dict.keys()
@@ -141,7 +146,7 @@ class Transition:
         return min(possibilities, key=lambda dict: count_intersections(dict))
 
     def __str__(self):
-        return "Transition : " + self.source.name + " -> " + self.target.name
+        return "Transition(" + self.source.name + " -> " + self.target.name + ")"
 
     def __repr__(self):
         return self.__str__()
@@ -204,7 +209,7 @@ class TextZone:
             coordinates = {}
             for i in range(len(text_zone._elements)):
                 element = text_zone._elements[i]
-                coordinates[element] = (x, y + space / 3 + char_height * (i + 1))
+                coordinates[element] = (x, y + space / 8 + char_height * (i + 1))
             possibilities += [coordinates]
             for i in range(len(text_zone._elements)):
                 coordinates = {}
