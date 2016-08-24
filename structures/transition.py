@@ -5,8 +5,6 @@ from structures.segment import Segment, get_box_segments, intersect
 from typing import Tuple, Dict, List
 
 
-
-
 class Transition:
     def __init__(self, source, target, guard: str = '', event: str = '', action: str = ''):
         self.source = source
@@ -15,7 +13,7 @@ class Transition:
         self.guard = if_not_none(guard)
         self.event = if_not_none(event)
         self.action = if_not_none(action)
-        self._x1, self._x2, self._y1, self._y2 = 0, 0, 0, 0
+        self._x1, self._x2, self._y1, self._y2 = math.inf, math.inf, math.inf, math.inf
         self.polyline = []
 
     @property
@@ -206,7 +204,7 @@ class TextZone:
             coordinates = {}
             for i in range(len(text_zone._elements)):
                 element = text_zone._elements[i]
-                coordinates[element] = (x, y + space / 2 + char_height * (i + 1))
+                coordinates[element] = (x, y + space / 3 + char_height * (i + 1))
             possibilities += [coordinates]
             for i in range(len(text_zone._elements)):
                 coordinates = {}
@@ -232,6 +230,9 @@ class TextZone:
                 coordinates2[element] = (x + space / 2, y + (i + 1) * char_height)
             possibilities = [coordinates1, coordinates2]
         return possibilities
+
+    def __repr__(self):
+        return "event: " + self._event + "; guard: " + self._guard + "; action: " + self._action
 
 
 """

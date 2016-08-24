@@ -105,5 +105,5 @@ def intersect(segment1: Segment, segment2: Segment):
 def get_box_segments(box: Box, coordinates: Dict[Box, Tuple[float, float, float, float]]) -> \
         (Segment, Segment, Segment, Segment):
     x1, y1, x2, y2 = coordinates[box]
-    return Segment((x1, y1), (x2, y1)), Segment((x1, y1), (x1, y2)), \
-           Segment((x1, y2), (x2, y2)), Segment((x2, y1), (x2, y2))
+    return Segment((x1, y1), (x1, y2)), Segment((x1, y1), (x2, y1)), \
+           Segment((x2, y1), (x2, y2)), Segment((x1, y2), (x2, y2))

@@ -1,4 +1,4 @@
-from structures.box import Box, radius
+from structures.box import Box, radius, char_height, char_width, space
 from structures.transition import Transition, update_transitions_coordinates
 import sismic
 from sismic.model.elements import CompoundState, OrthogonalState
@@ -58,7 +58,7 @@ class RootBox(Box):
             # now check the transitions
             transitions = statechart.transitions_from(state.name)
             transitions = map(
-                lambda t: Transition(source=box, target=next(x for x in self._inner_states if x.name == t.target),\
+                lambda t: Transition(source=box, target=next(x for x in self._inner_states if x.name == t.target), \
                                      guard=t.guard, action=t.action, event=t.event),
                 transitions)
 
@@ -97,7 +97,30 @@ class RootBox(Box):
             return transitions + t
 
         transitions = find_transitions(self)
-        update_transitions_coordinates(transitions, self.coordinates)
+        coordinates = self.coordinates
+        update_transitions_coordinates(transitions, coordinates)
+
+        for transition in transitions:
+            x1, y1, x2, y2 = 0, 0, 0, 0
+            source = transition.source
+            target = transition.target
+            text_len = max(len(transition.guard) * char_width, \
+                           len(transition.event) * char_width, \
+                           len(transition.action) * char_width) + space / 2
+            if source == target:
+                if source.zone == 'north' or source.zone == 'west':
+                    x1 += space + text_len
+                    y1 += space
+                else:
+                    x2 += space + text_len
+                    y2 += space
+            else:
+                zone = self.zone(target, source)
+                if 'west' in zone:
+                    x1 += text_len
+                elif 'east' in zone:
+                    x2 += text_len
+            source._additional_space = x1, y1, x2, y2
         return transitions
 
     @property

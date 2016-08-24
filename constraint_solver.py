@@ -35,19 +35,7 @@ class BoxWithConstraints:
         self._x = Variable(box.name + ' x', 0)
         self._y = Variable(box.name + ' y', 0)
         self._width, self._height = dimensions[box]
-
-        def additional_space():
-            x1, y1, x2, y2 = 0, 0, 0, 0
-            if self.box.has_self_transition:
-                if self.box.zone == 'north' or self.box.zone == 'west':
-                    x1 += space
-                    y1 += space
-                else:
-                    x2 += space
-                    y2 += space
-            return x1, y1, x2, y2
-
-        self._space = additional_space()
+        self._space = box.additional_space
 
     @property
     def box(self):

@@ -27,6 +27,7 @@ class Box:
         self._parent = None  # type: Box
         self._shape = 'rectangle'  # type: str
         self._constraints = []  # type: list[Constraint]
+        self._additional_space = 0, 0, 0, 0
         self._width, self._height = -1, -1
 
     @property
@@ -58,6 +59,10 @@ class Box:
                 else:
                     x2 = max(map(lambda child: child.coordinates[child][2], self.parent.children))
             return x2, y2
+
+    @property
+    def additional_space(self):
+        return self._additional_space
 
     def name_position(self, insert=(0, 0)):
         """
@@ -252,6 +257,9 @@ class Box:
             box1 = ancestors_box1[ancestors_box1.index(closest_ancestor) - 1]
             box2 = ancestors_box2[ancestors_box2.index(closest_ancestor) - 1]
             closest_ancestor.add_constraint(Constraint(box1, constraint.direction, box2))
+
+    def add_text_zone_constraint(self, text_coordinates):
+        self._text_zone_constraints.update(text_coordinates)
 
     @property
     def name(self):
