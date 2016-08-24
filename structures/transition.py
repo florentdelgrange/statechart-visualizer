@@ -648,7 +648,7 @@ def transitions_local_search(transitions, coordinates):
                         finalization(points, transition)
 
                 else:
-                    for points in [n, s]:
+                    for points in [[n], [s]]:
                         if points[-1] == n:
                             points = [((x1 + x2) / 2, y1)]
                             n1, n2 = n
@@ -676,7 +676,7 @@ def transitions_local_search(transitions, coordinates):
                         t.polyline = points
 
                 if y1 < w[1]:
-                    for points in [n, w, e]:
+                    for points in [[n], [w], [e]]:
                         if points[-1] == n:
                             points = [((x1 + x2) / 2, y1)]
                             n1, n2 = n
@@ -722,7 +722,7 @@ def transitions_local_search(transitions, coordinates):
                         finalization(points, transition)
 
                 else:
-                    for points in [w, e]:
+                    for points in [[w], [e]]:
                         if points[-1] == w:
                             points = [(x1, (y1 + y2) / 2)]
                             w1, w2 = w
@@ -750,7 +750,7 @@ def transitions_local_search(transitions, coordinates):
                         t.polyline = points
 
                 if y1 > w[1]:
-                    for points in [s, w, e]:
+                    for points in [[s], [w], [e]]:
                         if points[-1] == s:
                             points = [((x1 + x2) / 2, y2)]
                             s1, s2 = s
@@ -796,7 +796,7 @@ def transitions_local_search(transitions, coordinates):
                         finalization(points, transition)
 
                 else:
-                    for points in [w, e]:
+                    for points in [[w], [e]]:
                         if points[-1] == w:
                             points = [(x1, (y1 + y2) / 2)]
                             w1, w2 = w
