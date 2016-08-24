@@ -807,6 +807,7 @@ def transitions_local_search(transitions, coordinates):
                             e1, e2 = e
                             points += [(e1, (y1 + y2) / 2)]
                             points += [e]
+                        finalization(points, transition)
 
 
 def compute_attraction_points(box, coordinates):
