@@ -126,7 +126,7 @@ class Transition:
         def compute_text_dimension(dict) -> Tuple[float, float, float, float]:
             keys = dict.keys()
             x1, y1 = min(map(lambda key: dict[key][0], keys)), min(map(lambda key: dict[key][1] - char_height, keys))
-            x2, y2 = max(map(lambda key: dict[key][0] + max(map(lambda x: len(x) * char_width, keys)), keys)), \
+            x2, y2 = max(map(lambda key: dict[key][0] + len(key) * char_width, keys)), \
                      max(map(lambda key: dict[key][1], keys))
             return x1, y1, x2, y2
 
