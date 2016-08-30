@@ -1,4 +1,5 @@
-from cassowary import SimplexSolver, Variable, WEAK, STRONG
+from cassowary import SimplexSolver, Variable, WEAK
+from collections import OrderedDict
 
 space = 20
 
@@ -21,8 +22,29 @@ class Constraint:
     def direction(self):
         return self._direction
 
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            opposite = {'north': 'south', 'south': 'north', 'east': 'west', 'west': 'east'}
+            return (self._box1 == other._box1 and self.direction == other.direction and self._box2 == other.box2) or \
+                   (self._box1 == other._box2 and self.direction == opposite[
+                       other.direction] and self._box2 == other.box1)
+        else:
+            return False
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __hash__(self):
+        opposite = {'north': 'south', 'south': 'north', 'east': 'west', 'west': 'east'}
+        if self.direction == 'north' or self.direction == 'west':
+            return ((hash(self.box1.name) + 13) ^ (hash(self.direction) + 13)) + (hash(opposite[self.direction]) ^ hash(
+                self.box2.name))
+        else:
+            return (hash(self.box1.name) ^ hash(self.direction)) + ((hash(opposite[self.direction]) + 13) ^ (
+                hash(self.box2.name) + 13))
+
     def __repr__(self):
-        return self.box1.__repr__() + ' ' + self.direction + ' ' + self.box2.__repr__()
+        return 'Constraint(' + self.box1.name + ', ' + self.direction + ', ' + self.box2.name + ')'
 
 
 class BoxWithConstraints:
@@ -60,6 +82,10 @@ class BoxWithConstraints:
     @property
     def height(self):
         return self._height
+
+    @property
+    def name(self):
+        return self.box.name
 
     def __repr__(self):
         return 'decorator<' + self.box.__repr__() + '>'
@@ -101,10 +127,10 @@ def resolve(parent, dimensions, children, constraint_list):
         x1, y1, x2, y2 = box1.space
         x3, y3, x4, y4 = box2.space
         {
-            'north': lambda: solver.add_constraint(box1.y + box1.height + y2 + space + y3 < box2.y, strength=STRONG),
-            'east': lambda: solver.add_constraint(box1.x > box2.x + box2.width + x4 + space + x1, strength=STRONG),
-            'south': lambda: solver.add_constraint(box1.y > box2.y + box2.height + y4 + space + y1, strength=STRONG),
-            'west': lambda: solver.add_constraint(box1.x + box1.width + x2 + space + x3 < box2.x, strength=STRONG)
+            'north': lambda: solver.add_constraint(box1.y + box1.height + y2 + space + y3 < box2.y),
+            'east': lambda: solver.add_constraint(box1.x > box2.x + box2.width + x4 + space + x1),
+            'south': lambda: solver.add_constraint(box1.y > box2.y + box2.height + y4 + space + y1),
+            'west': lambda: solver.add_constraint(box1.x + box1.width + x2 + space + x3 < box2.x)
         }[constraint.direction]()
 
     solver = SimplexSolver()
@@ -131,7 +157,7 @@ def resolve(parent, dimensions, children, constraint_list):
         else:
             solver.add_constraint(b1.x + x1 - left_limit == right_limit - b1.x - b1.width - x2, strength=WEAK)
         for b2 in boxes[i + 1:]:
-            if not(any(filter(lambda constraint: b1 in [constraint.box1, constraint.box2]\
+            if not (any(filter(lambda constraint: b1 in [constraint.box1, constraint.box2] \
                     and b2 in [constraint.box1, constraint.box2], constraints))):
                 x3, y3, x4, y4 = b2.space
                 if parent.axis == 'horizontal':
@@ -144,7 +170,7 @@ def resolve(parent, dimensions, children, constraint_list):
 
     width, height = max(map(lambda box: box.x.value + box.width + box.space[2] + space, boxes)), \
                     max(map(lambda box: box.y.value + box.height + box.space[3] + space, boxes))
-    new_coordinates = {parent: (0, 0, width, height)}
+    new_coordinates = OrderedDict({parent: (0, 0, width, height)})
     for box in boxes:
         new_coordinates[box.box] = (box.x.value, box.y.value, box.x.value + box.width, box.y.value + box.height)
     return new_coordinates
