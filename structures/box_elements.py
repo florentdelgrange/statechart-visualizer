@@ -2,6 +2,7 @@ from structures.box import Box, radius, char_height, char_width, space
 from structures.transition import Transition, update_transitions_coordinates
 import sismic
 from sismic.model.elements import CompoundState, OrthogonalState
+from orderedset import OrderedSet
 
 
 class InitBox(Box):
@@ -20,7 +21,7 @@ class InitBox(Box):
         return radius * 2, radius * 2
 
     def __repr__(self):
-        return "InitBox to " + self.transitions[0].target.name
+        return "InitBox(to=" + self.transitions[0].target.name + ")"
 
 
 class RootBox(Box):
@@ -139,11 +140,11 @@ class RootBox(Box):
         :return: all the constraints on the Boxes situated in this Root Box.
         """
 
-        def find_constraints(box, constraints=[]):
-            c = []
+        def find_constraints(box, constraints=OrderedSet()):
+            c = OrderedSet()
             for child in box.children:
-                c += find_constraints(child, child._constraints)
-            return constraints + c
+                c = c | find_constraints(child, child._constraints)
+            return constraints | c
 
         constraints = find_constraints(self)
         return constraints
@@ -188,4 +189,4 @@ class RootBox(Box):
         return zone
 
     def __repr__(self):
-        return "Root Box: " + self.name
+        return "RootBox(name=" + self.name + ")"

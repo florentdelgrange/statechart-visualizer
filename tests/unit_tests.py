@@ -4,7 +4,7 @@ import unittest
 from structures.segment import Segment, intersect, combined_segments, get_box_segments
 from constraint_solver import Constraint
 from structures.box import Box
-from structures.box_elements import RootBox
+from structures.box_elements import RootBox, InitBox
 from structures.transition import Transition
 
 
@@ -32,10 +32,10 @@ class TestSegment(unittest.TestCase):
         box = Box('random')
         coordinates = {box: (10, 10, 30, 40)}
         s1, s2, s3, s4 = get_box_segments(box, coordinates)
-        self.assertEqual((s1.p1, s1.p2), ((10, 10), (30, 10)))
-        self.assertEqual((s2.p1, s2.p2), ((10, 10), (10, 40)))
-        self.assertEqual((s3.p1, s3.p2), ((10, 40), (30, 40)))
-        self.assertEqual((s4.p1, s4.p2), ((30, 10), (30, 40)))
+        self.assertEqual((s1.p1, s1.p2), ((10, 10), (10, 40)))
+        self.assertEqual((s2.p1, s2.p2), ((10, 10), (30, 10)))
+        self.assertEqual((s3.p1, s3.p2), ((30, 10), (30, 40)))
+        self.assertEqual((s4.p1, s4.p2), ((10, 40), (30, 40)))
 
 
 class TestTransitions(unittest.TestCase):
@@ -114,6 +114,31 @@ class TestConstraints(unittest.TestCase):
         self.root_box.add_constraint(Constraint(self.states['door opened'], 'east', self.states['door closed']))
         self.assertEqual(
             {'south', 'east'}, set(self.root_box.zone(self.states['door opened'], self.states['door closed'])))
+
+    def test_order_constraints(self):
+        """
+        test if the adding order of the constraints influences the coordinates of the statechart.
+        """
+        with open("tests/elevator.yaml", 'r') as stream:
+            statechart = io.import_from_yaml(stream)
+            assert isinstance(statechart, sismic.model.Statechart)
+        root_box1 = RootBox(statechart)
+        root_box2 = RootBox(statechart)
+        root_box1.add_constraint(
+            Constraint(root_box1.get_box_by_name('doorsClosed'), 'south', root_box1.get_box_by_name('doorsOpen')))
+        root_box1.add_constraint(
+            Constraint(root_box1.get_box_by_name('doorsClosed'), 'west', root_box1.get_box_by_name('moving')))
+        root_box2.add_constraint(
+            Constraint(root_box2.get_box_by_name('doorsClosed'), 'west', root_box2.get_box_by_name('moving')))
+        root_box2.add_constraint(
+            Constraint(root_box2.get_box_by_name('doorsClosed'), 'south', root_box2.get_box_by_name('doorsOpen')))
+        coordinates1 = root_box1.coordinates
+        coordinates2 = root_box2.coordinates
+        for key in coordinates1.keys():
+            if not isinstance(key, RootBox) and not isinstance(key, InitBox):
+                key2 = root_box2.get_box_by_name(key.name)
+                self.assertEqual(coordinates1[key], coordinates2[key2],
+                                 msg='the positions of ' + str(key) + ' are not equals')
 
 
 if __name__ == '__main__':

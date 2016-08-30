@@ -2,6 +2,8 @@ import constraint_solver
 from constraint_solver import Constraint
 import math
 from typing import Dict, Tuple
+from collections import OrderedDict
+from orderedset import OrderedSet
 
 char_width, char_height, space, radius = 10, 20, 20, 20
 
@@ -26,7 +28,7 @@ class Box:
         self._exit = ''  # type: str
         self._parent = None  # type: Box
         self._shape = 'rectangle'  # type: str
-        self._constraints = []  # type: list[Constraint]
+        self._constraints = OrderedSet()  # type: set[Constraint]
         self._additional_space = 0, 0, 0, 0
         self._width, self._height = -1, -1
 
@@ -110,10 +112,10 @@ class Box:
             format : {Box : (x1, y1, x2, y2)} where insert=(x1, y1) and end=(x2, y2)
         """
         if not self.children:
-            return {self: (0, 0, self.width, self.height)}
+            return OrderedDict({self: (0, 0, self.width, self.height)})
         else:
-            coordinates = {}
-            dimensions = {}
+            coordinates = OrderedDict()
+            dimensions = OrderedDict()
             for child in self.children:
                 coordinates.update(child.coordinates)
                 x1, y1, x2, y2 = coordinates[child]
@@ -231,18 +233,16 @@ class Box:
             # contradiction checking
             opposite = {'north': 'south', 'south': 'north', 'east': 'west', 'west': 'east'}
             opposite_constraints = list(
-                filter(lambda c: (c.box1 == constraint.box1 and c.box2 == constraint.box2 and opposite[
-                    c.direction] == constraint.direction) or (
-                                     c.box1 == constraint.box2 and c.box2 == constraint.box1 and c.direction == constraint.direction),
+                filter(lambda c: (c.box1 == constraint.box1 and c.box2 == constraint.box2 \
+                                  and opposite[c.direction] == constraint.direction) \
+                                 or (c.box1 == constraint.box2 and c.box2 == constraint.box1 \
+                                     and c.direction == constraint.direction),
                        self._constraints))
             if opposite_constraints:
                 for x in opposite_constraints:
                     self._constraints.remove(x)
-            elif any(filter(lambda x: constraint.box1 == x.box1 and \
-                            constraint.box2 == x.box2 and constraint.direction == x.direction, self._constraints)):
-                return
             else:
-                self._constraints += [constraint]
+                self._constraints.add(constraint)
                 if len(list(filter(lambda child: child.shape != 'circle', self.children))) == 2 \
                         and constraint.direction in ['north', 'south'] and self.axis == 'horizontal':
                     self.axis = 'vertical'
@@ -448,7 +448,7 @@ class Box:
         return next((True for t in self.transitions if t.target == self), False)
 
     def __repr__(self):
-        return "State box : " + self.name
+        return "StateBox(name=" + self.name + ")"
 
 
 class GroupBox(Box):
@@ -465,7 +465,7 @@ class GroupBox(Box):
         return 0
 
     def __repr__(self):
-        return "GroupBox : " + self.children.__str__()
+        return "GroupBox(content=" + self.children.__str__() + ")"
 
 
 def lower_common_ancestor(box1: Box, box2: Box):
