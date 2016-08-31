@@ -15,7 +15,6 @@ class Transition:
         self.action = if_not_none(action)
         self._x1, self._x2, self._y1, self._y2 = math.inf, math.inf, math.inf, math.inf
         self.polyline = []
-        self._last_text_zone_computed = None
 
     def copy(self):
         copy = Transition(self.source, self.target, self.guard, self.event, self.action)
@@ -110,39 +109,6 @@ class Transition:
                     conflict_list.append(transition)
         return conflict_list
 
-    def get_text_and_zone(self, coordinates, transitions):
-        possibilities = []
-        text = TextZone(self.guard, self.action, self.event)
-        if self.guard == '' and self.event == '':
-            return {}
-
-        if self.target != self.source:
-            for segment in self.segments:
-                possibilities += text.coordinates_possibilities(segment)
-        else:
-            possibilities += text.coordinates_possibilities(
-                max(filter(lambda segment: segment.is_vertical, self.segments), key=lambda segment: segment.length)
-            )
-
-        self._last_text_zone_computed = min(possibilities,
-                                            key=lambda dict: count_text_intersections(dict, coordinates, transitions))
-        return self._last_text_zone_computed
-
-    @property
-    def last_text_zone_computed(self) -> Dict[str, Tuple[float, float, float, float]]:
-        """
-        WARNING : don't forget to clear this attribute as soon as you have computed the transitions
-
-        :return: the last text zone computed and its coordinates in a dict
-        """
-        return self._last_text_zone_computed
-
-    def clear_last_text_zone(self):
-        """
-        clear the last text zone computed
-        """
-        self._last_text_zone_computed = None
-
     def __str__(self):
         return "Transition(" + self.source.name + " -> " + self.target.name + ")"
 
@@ -150,15 +116,18 @@ class Transition:
         return self.__str__()
 
 
-def count_text_intersections(text_dict, coordinates, transitions):
+def count_text_intersections(text_dict, already_computed_texts, coordinates, transitions):
     """
     Compute and count the intersections of a text with boxes and transitions
 
     :param text_dict: a dict such that the key is the text and the value is the insert coordinates of this text
+    :param already_computed_texts: it is a list of dict containing a text linking its coordinates
+           which would cause intersections with text_dict.
     :param coordinates: a dict such that the key is a box and the value is the coordinates of this box
     :param transitions: a list of transitions
     :return: the number of intersections
     """
+
     def compute_text_dimension(dict) -> Tuple[float, float, float, float]:
         keys = dict.keys()
         x1, y1 = min(map(lambda key: dict[key][0], keys)), min(map(lambda key: dict[key][1] - char_height, keys))
@@ -182,11 +151,40 @@ def count_text_intersections(text_dict, coordinates, transitions):
             for segment2 in transition.segments:
                 if intersect(segment1, segment2):
                     counter += 1
-            if transition._last_text_zone_computed is not None:
-                for segment2 in segments_zone(transition._last_text_zone_computed):
+            for text in already_computed_texts:
+                for segment2 in segments_zone(text):
                     if intersect(segment1, segment2):
-                        counter += 1
+                        counter += 4  # we especially don't want intersections between texts
     return counter
+
+
+def get_text_and_zone(coordinates, transitions):
+    """
+    Compute the coordinates of the texts (like guard, event, action) on the transitions.
+    :param coordinates: a dict linking the boxes related to the transitions with their coordinates
+    :param transitions: the transitions list
+    :return: a list of dict linking the text with its coordinates
+    """
+    texts = []
+
+    for transition in transitions:
+        possibilities = []
+        text = TextZone(transition.guard, transition.action, transition.event)
+
+        if transition.guard != '' or transition.event != '':
+            if transition.target != transition.source:
+                for segment in transition.segments:
+                    possibilities += text.coordinates_possibilities(segment)
+            else:
+                possibilities += text.coordinates_possibilities(
+                    max(filter(lambda segment: segment.is_vertical, transition.segments),
+                        key=lambda segment: segment.length)
+                )
+
+            texts += [min(possibilities,
+                          key=lambda dict: count_text_intersections(dict, texts, coordinates, transitions))]
+
+    return texts
 
 
 class TextZone:
@@ -528,5 +526,3 @@ def update_transitions_coordinates(transitions, coordinates):
                                        ((x1 + x2) / 2, y2)]
 
     optimization.transitions_local_search(transitions, coordinates)
-    for transition in transitions:
-        transition.clear_last_text_zone()

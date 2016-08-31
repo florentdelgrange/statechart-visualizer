@@ -1,4 +1,6 @@
 import svgwrite
+
+from structures import transition
 from structures.box import Box, radius, char_width, char_height
 from structures.box_elements import RootBox
 
@@ -86,30 +88,33 @@ def render_box(box: Box, coordinates):
 def render_transitions(transitions, coordinates):
     lines = []
     for t in transitions:
-        g = svgwrite.container.Group()
         if t.polyline:
-            g.add(svgwrite.shapes.Polyline(points=t.polyline, stroke='black', stroke_width=1, fill="none",
-                                           marker_end="url(#arrow)"))
+            lines += [svgwrite.shapes.Polyline(points=t.polyline, stroke='black', stroke_width=1, fill="none",
+                                               marker_end="url(#arrow)")]
         else:
             (x1, y1), (x2, y2) = t.coordinates
-            g.add(svgwrite.shapes.Line(start=(x1, y1), end=(x2, y2), stroke='black', stroke_width=1,
-                                       marker_end="url(#arrow)"))
-        dict = t.get_text_and_zone(coordinates, transitions)
+            lines += [svgwrite.shapes.Line(start=(x1, y1), end=(x2, y2), stroke='black', stroke_width=1,
+                                           marker_end="url(#arrow)")]
+
+    print(transition.get_text_and_zone(coordinates, transitions))
+    for dict in transition.get_text_and_zone(coordinates, transitions):
         for text in dict.keys():
-            g.add(
-                svgwrite.text.Text(text, insert=dict[text], style=normal_style, textLength=len(text) * char_width))
-        lines += [g]
+            lines += [
+                svgwrite.text.Text(text, insert=dict[text], style=normal_style, textLength=len(text) * char_width)]
 
     return lines
 
 
-def export(box: Box):
+def export(box: Box, file_name=''):
     """
     Creates the svg file that represents the Box
 
     :param box: the box that will be on the svg file
+    :param file_name: the name of the file to create
     """
-    dwg = svgwrite.Drawing(box.name + ".svg", size=(box.width, box.height))
+    if not file_name:
+        file_name = box.name
+    dwg = svgwrite.Drawing(file_name + ".svg", size=(box.width, box.height))
     coordinates = box.coordinates
     dwg.add(render_box(box, coordinates))
     marker = svgwrite.container.Marker(insert=(8, 3), orient='auto', markerWidth=30, markerHeight=20,
