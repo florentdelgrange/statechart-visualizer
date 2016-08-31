@@ -65,6 +65,10 @@ class Transition:
         (x1, y1), (x2, y2) = start, end
         self._x1, self._x2, self._y1, self._y2 = x1, x2, y1, y2
 
+    def reset_coordinates(self):
+        self.polyline = []
+        self._x1, self._x2, self._y1, self._y2 = math.inf, math.inf, math.inf, math.inf
+
     def conflicts_with_boxes(self, coordinates: Dict):
         """
         Compute the intersections with the boxes in parameter and this transition.

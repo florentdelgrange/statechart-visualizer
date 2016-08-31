@@ -96,7 +96,6 @@ def render_transitions(transitions, coordinates):
             lines += [svgwrite.shapes.Line(start=(x1, y1), end=(x2, y2), stroke='black', stroke_width=1,
                                            marker_end="url(#arrow)")]
 
-    print(transition.get_text_and_zone(coordinates, transitions))
     for dict in transition.get_text_and_zone(coordinates, transitions):
         for text in dict.keys():
             lines += [
@@ -114,14 +113,15 @@ def export(box: Box, file_name=''):
     """
     if not file_name:
         file_name = box.name
-    dwg = svgwrite.Drawing(file_name + ".svg", size=(box.width, box.height))
+    transitions = box.transitions
     coordinates = box.coordinates
+    dwg = svgwrite.Drawing(file_name + ".svg", size=(box.width, box.height))
     dwg.add(render_box(box, coordinates))
     marker = svgwrite.container.Marker(insert=(8, 3), orient='auto', markerWidth=30, markerHeight=20,
                                        id="arrow")
     path = svgwrite.path.Path(d="M0,0 L0,6 L9,3 z")
     marker.add(path)
     dwg.defs.add(marker)
-    for transition in render_transitions(box.transitions, coordinates):
+    for transition in render_transitions(transitions, coordinates):
         dwg.add(transition)
     dwg.save()

@@ -94,10 +94,16 @@ class RootBox(Box):
         def find_transitions(box, transitions=[]):
             t = []
             for child in box.children:
+                for transition in child.transitions:
+                    transition.reset_coordinates()
                 t += find_transitions(child, child.transitions)
             return transitions + t
 
         transitions = find_transitions(self)
+
+        for box in self._inner_states:
+            box._additional_space = 0, 0, 0, 0
+
         coordinates = self.coordinates
         update_transitions_coordinates(transitions, coordinates)
 
@@ -132,6 +138,8 @@ class RootBox(Box):
                     elif 'south' in zone:
                         y2 = max(y2, char_height)
                 source._additional_space = x1, y1, x2, y2
+
+        update_transitions_coordinates(transitions, self.coordinates)
         return transitions
 
     @property
@@ -140,8 +148,8 @@ class RootBox(Box):
         :return: all the constraints on the Boxes situated in this Root Box.
         """
 
-        def find_constraints(box, constraints=OrderedSet()):
-            c = OrderedSet()
+        def find_constraints(box, constraints=set()):
+            c = set()
             for child in box.children:
                 c = c | find_constraints(child, child._constraints)
             return constraints | c

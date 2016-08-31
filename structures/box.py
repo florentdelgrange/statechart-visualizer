@@ -28,7 +28,7 @@ class Box:
         self._exit = ''  # type: str
         self._parent = None  # type: Box
         self._shape = 'rectangle'  # type: str
-        self._constraints = OrderedSet()  # type: set[Constraint]
+        self._constraints = set()  # type: set[Constraint]
         self._additional_space = 0, 0, 0, 0
         self._width, self._height = -1, -1
 

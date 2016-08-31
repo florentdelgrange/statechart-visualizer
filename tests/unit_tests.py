@@ -1,6 +1,8 @@
 from sismic import io
 import sismic
 import unittest
+
+import svgwriter
 from structures.segment import Segment, intersect, combined_segments, get_box_segments
 from constraint_solver import Constraint
 from structures.box import Box
@@ -122,23 +124,33 @@ class TestConstraints(unittest.TestCase):
         with open("tests/elevator.yaml", 'r') as stream:
             statechart = io.import_from_yaml(stream)
             assert isinstance(statechart, sismic.model.Statechart)
-        root_box1 = RootBox(statechart)
-        root_box2 = RootBox(statechart)
-        root_box1.add_constraint(
-            Constraint(root_box1.get_box_by_name('doorsClosed'), 'south', root_box1.get_box_by_name('doorsOpen')))
-        root_box1.add_constraint(
-            Constraint(root_box1.get_box_by_name('doorsClosed'), 'west', root_box1.get_box_by_name('moving')))
-        root_box2.add_constraint(
-            Constraint(root_box2.get_box_by_name('doorsClosed'), 'west', root_box2.get_box_by_name('moving')))
-        root_box2.add_constraint(
-            Constraint(root_box2.get_box_by_name('doorsClosed'), 'south', root_box2.get_box_by_name('doorsOpen')))
-        coordinates1 = root_box1.coordinates
-        coordinates2 = root_box2.coordinates
+        root_box = RootBox(statechart)
+        root_box.add_constraint(
+            Constraint(root_box.get_box_by_name('doorsClosed'), 'south', root_box.get_box_by_name('doorsOpen')))
+        root_box.add_constraint(
+            Constraint(root_box.get_box_by_name('doorsClosed'), 'west', root_box.get_box_by_name('moving')))
+        root_box.transitions
+        coordinates1 = root_box.coordinates
+        set1 = root_box.constraints.copy()
+        svgwriter.export(root_box, file_name='test_box1')
+
+        root_box.add_constraint(
+            Constraint(root_box.get_box_by_name('doorsClosed'), 'north', root_box.get_box_by_name('doorsOpen')))
+        root_box.add_constraint(
+            Constraint(root_box.get_box_by_name('doorsClosed'), 'east', root_box.get_box_by_name('moving')))
+        root_box.add_constraint(
+            Constraint(root_box.get_box_by_name('doorsClosed'), 'west', root_box.get_box_by_name('moving')))
+        root_box.add_constraint(
+            Constraint(root_box.get_box_by_name('doorsClosed'), 'south', root_box.get_box_by_name('doorsOpen')))
+        root_box.transitions
+        coordinates2 = root_box.coordinates
+        set2 = root_box.constraints.copy()
+        svgwriter.export(root_box, file_name='test_box2')
+
+        self.assertEqual(set1, set2)
         for key in coordinates1.keys():
-            if not isinstance(key, RootBox) and not isinstance(key, InitBox):
-                key2 = root_box2.get_box_by_name(key.name)
-                self.assertEqual(coordinates1[key], coordinates2[key2],
-                                 msg='the positions of ' + str(key) + ' are not equals')
+            self.assertEqual(coordinates1[key], coordinates2[key],
+                             msg='the positions of ' + str(key) + ' are not equals')
 
 
 if __name__ == '__main__':
