@@ -3,7 +3,6 @@ from constraint_solver import Constraint
 import math
 from typing import Dict, Tuple
 from collections import OrderedDict
-from orderedset import OrderedSet
 
 char_width, char_height, space, radius = 10, 20, 20, 20
 

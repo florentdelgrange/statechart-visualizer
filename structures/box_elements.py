@@ -2,7 +2,6 @@ from structures.box import Box, radius, char_height, char_width, space
 from structures.transition import Transition, update_transitions_coordinates
 import sismic
 from sismic.model.elements import CompoundState, OrthogonalState
-from orderedset import OrderedSet
 
 
 class InitBox(Box):
@@ -88,6 +87,8 @@ class RootBox(Box):
     def transitions(self):
         """
         Compute their positions and update them.
+        Note that the disposition of the transitions and their texts are computed here.
+
         :return: all the transitions in the statechart.
         """
 

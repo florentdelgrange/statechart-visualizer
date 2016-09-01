@@ -120,78 +120,15 @@ class Transition:
         return self.__str__()
 
 
-def count_text_intersections(text_dict, already_computed_texts, coordinates, transitions):
-    """
-    Compute and count the intersections of a text with boxes and transitions
-
-    :param text_dict: a dict such that the key is the text and the value is the insert coordinates of this text
-    :param already_computed_texts: it is a list of dict containing a text linking its coordinates
-           which would cause intersections with text_dict.
-    :param coordinates: a dict such that the key is a box and the value is the coordinates of this box
-    :param transitions: a list of transitions
-    :return: the number of intersections
-    """
-
-    def compute_text_dimension(dict) -> Tuple[float, float, float, float]:
-        keys = dict.keys()
-        x1, y1 = min(map(lambda key: dict[key][0], keys)), min(map(lambda key: dict[key][1] - char_height, keys))
-        x2, y2 = max(map(lambda key: dict[key][0] + len(key) * char_width, keys)), \
-                 max(map(lambda key: dict[key][1], keys))
-        return x1, y1, x2, y2
-
-    def segments_zone(dict):
-        x1, y1, x2, y2 = compute_text_dimension(dict)
-        return Segment((x1, y1), (x1, y2)), Segment((x1, y1), (x2, y1)), \
-               Segment((x2, y1), (x2, y2)), Segment((x1, y2), (x2, y2))
-
-    counter = 0
-    for box in coordinates.keys():
-        for segment1 in segments_zone(text_dict):
-            for segment2 in get_box_segments(box, coordinates):
-                if intersect(segment1, segment2):
-                    counter += 1
-    for transition in transitions:
-        for segment1 in segments_zone(text_dict):
-            for segment2 in transition.segments:
-                if intersect(segment1, segment2):
-                    counter += 1
-            for text in already_computed_texts:
-                for segment2 in segments_zone(text):
-                    if intersect(segment1, segment2):
-                        counter += 4  # we especially don't want intersections between texts
-    return counter
-
-
-def get_text_and_zone(coordinates, transitions):
-    """
-    Compute the coordinates of the texts (like guard, event, action) on the transitions.
-    :param coordinates: a dict linking the boxes related to the transitions with their coordinates
-    :param transitions: the transitions list
-    :return: a list of dict linking the text with its coordinates
-    """
-    texts = []
-
-    for transition in transitions:
-        possibilities = []
-        text = TextZone(transition.guard, transition.action, transition.event)
-
-        if transition.guard != '' or transition.event != '':
-            if transition.target != transition.source:
-                for segment in transition.segments:
-                    possibilities += text.coordinates_possibilities(segment)
-            else:
-                possibilities += text.coordinates_possibilities(
-                    max(filter(lambda segment: segment.is_vertical, transition.segments),
-                        key=lambda segment: segment.length)
-                )
-
-            texts += [min(possibilities,
-                          key=lambda dict: count_text_intersections(dict, texts, coordinates, transitions))]
-
-    return texts
-
-
 class TextZone:
+    """
+    This object is used to arrange the text from a transition.
+
+    :param guard : the guard of a transition
+    :param action : the action of a transition
+    :param event : the event of a transition
+    """
+
     def __init__(self, guard: str, action: str, event: str):
         self._guard = {'': ''}.get(guard, '[' + guard + ']')
         self._action = {'': ''}.get(action, ' / ' + action)
@@ -232,6 +169,7 @@ class TextZone:
         Note that this text zone can be split for this segment.
 
         :param segment: the segment around which the computation will be based
+               (usage : pass a segment from a polyline or direct line that compound a transition)
         :return: the list of coordinates possibilities for the text
         """
         possibilities = []
@@ -279,6 +217,79 @@ class TextZone:
         return "event: " + self._event + "; guard: " + self._guard + "; action: " + self._action
 
 
+def count_text_intersections(text_dict, already_computed_texts, coordinates, transitions):
+    """
+    Compute and count the intersections of a text with boxes and transitions
+
+    :param text_dict: a dict such that the key is a text and the value is the insert coordinates of this text.
+           It represents a text zone of a transition (guard, event and action).
+    :param already_computed_texts: it is a list of dict containing texts linking their coordinates
+           which would cause intersections with text_dict.
+    :param coordinates: a dict such that the key is a box and the value is the coordinates of this box
+    :param transitions: a list of transitions
+    :return: the number of intersections of the text_dict with transitions, boxes and other texts
+    """
+
+    def compute_text_dimension(dict) -> Tuple[float, float, float, float]:
+        keys = dict.keys()
+        x1, y1 = min(map(lambda key: dict[key][0], keys)), min(map(lambda key: dict[key][1] - char_height, keys))
+        x2, y2 = max(map(lambda key: dict[key][0] + len(key) * char_width, keys)), \
+                 max(map(lambda key: dict[key][1], keys))
+        return x1, y1, x2, y2
+
+    def segments_zone(dict):
+        x1, y1, x2, y2 = compute_text_dimension(dict)
+        return Segment((x1, y1), (x1, y2)), Segment((x1, y1), (x2, y1)), \
+               Segment((x2, y1), (x2, y2)), Segment((x1, y2), (x2, y2))
+
+    counter = 0
+    for box in coordinates.keys():
+        for segment1 in segments_zone(text_dict):
+            for segment2 in get_box_segments(box, coordinates):
+                if intersect(segment1, segment2):
+                    counter += 1
+    for transition in transitions:
+        for segment1 in segments_zone(text_dict):
+            for segment2 in transition.segments:
+                if intersect(segment1, segment2):
+                    counter += 1
+            for text in already_computed_texts:
+                for segment2 in segments_zone(text):
+                    if intersect(segment1, segment2):
+                        counter += 4  # we especially don't want intersections between texts
+    return counter
+
+
+def get_text_and_zone(coordinates, transitions):
+    """
+    Compute the coordinates of the texts (like guard, event, action) on the transitions.
+
+    :param coordinates: a dict linking the boxes related to the transitions with their coordinates
+    :param transitions: the transitions list
+    :return: a list of dict linking the text with its coordinates
+    """
+    texts = []
+
+    for transition in transitions:
+        possibilities = []
+        text = TextZone(transition.guard, transition.action, transition.event)
+
+        if transition.guard != '' or transition.event != '':
+            if transition.target != transition.source:
+                for segment in transition.segments:
+                    possibilities += text.coordinates_possibilities(segment)
+            else:
+                possibilities += text.coordinates_possibilities(
+                    max(filter(lambda segment: segment.is_vertical, transition.segments),
+                        key=lambda segment: segment.length)
+                )
+
+            texts += [min(possibilities,
+                          key=lambda dict: count_text_intersections(dict, texts, coordinates, transitions))]
+
+    return texts
+
+
 """
 This part of code concerns the computation of the transitions' coordinates to draw
 them with a polyline or with a direct line.
@@ -289,7 +300,7 @@ def zone_of(box1, box2, coordinates):
     """
     box2 is ___ of box1
 
-    /!\ deprecated : use a RootBox with root_box.zone(box1, box2)
+    /!\ deprecated : use the method zone(box1, box2) from a RootBox object
     or structure.box.zone(box1, box2) instead.
 
     :param box1: the box reference
@@ -336,9 +347,9 @@ def acceptance_zone(box1, box2, axis, coordinates):
 
 def classic_arrow(transition, coordinates):
     """
-    gives the polyline list for a classic transition arrow
+    Gives the polyline list for a classic transition arrow.
 
-    :param transition: the transition to determines the polyline
+    :param transition: the transition that determines the polyline
     :param coordinates: the coordinates of the boxes ; Dict[Box: (int, int)]
     :return: a list containing the points of the polyline
     """
@@ -449,6 +460,12 @@ def classic_arrow(transition, coordinates):
 
 
 def update_transitions_coordinates(transitions, coordinates):
+    """
+    Update the coordinates of the transitions.
+
+    :param transitions: a list of transitions
+    :param coordinates: a dict linking boxes (related with transitions) with their coordinates.
+    """
     for transition in transitions:
         # First check if it is possible to draw directly a transition in with one line.
         source = transition.source
@@ -513,6 +530,7 @@ def update_transitions_coordinates(transitions, coordinates):
                     # classic arrow
                     transition.polyline = classic_arrow(transition, coordinates)
         else:
+            # self transition
             if source.zone == 'north':
                 transition.polyline = [((x1 + x2) / 2, y1), ((x1 + x2) / 2, y1 - space),
                                        (x1 - space, y1 - space), (x1 - space, (y1 + y2) / 2),

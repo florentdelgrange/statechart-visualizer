@@ -94,6 +94,7 @@ class BoxWithConstraints:
 def resolve(parent, dimensions, children, constraint_list):
     """
     Resolve a coordinates problem. The coordinates of the children entered in parameter will be computed.
+
     :param parent: the main box that contains the children entered in parameter
     :param dimensions: the dict of children's dimensions
     :param children: the children to dispose in the parent's box

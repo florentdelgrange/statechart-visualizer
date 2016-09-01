@@ -1,5 +1,3 @@
-import math
-
 from structures.box import Box, distance
 from typing import Dict, Tuple
 
