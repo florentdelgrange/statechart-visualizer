@@ -14,6 +14,32 @@ def transitions_local_search(transitions, coordinates):
     nb_conflicts = lambda transition: len(transition.conflicts_with_boxes(coordinates)) + \
                                       len(transition.conflicts_with_transitions(transitions))
 
+    def finalization_horizontal(points, transition):
+        x1, y1, x2, y2 = coordinates[transition.target]
+        mid = (x1 + x2) / 2
+        a1, a2 = points[-1]
+        b1, b2 = min([(mid, y1), (mid, y2)], key=lambda x: distance(points[-1], x))
+        points.pop()
+        points += [(b1, a2), (b1, b2)]
+        if a2 == b2:
+            points.pop()
+        transition.polyline = points
+        if nb_conflicts(t) > nb_conflicts(transition):
+            t.polyline = points
+
+    def finalization_vertical(points, transition):
+        x1, y1, x2, y2 = coordinates[transition.target]
+        mid = (y1 + y2) / 2
+        a1, a2 = points[-1]
+        b1, b2 = min([(x1, mid), (x2, mid)], key=lambda x: distance(points[-1], x))
+        points.pop()
+        points += [(a1, b2), (b1, b2)]
+        if a1 == b1:
+            points.pop()
+        transition.polyline = points
+        if nb_conflicts(t) > nb_conflicts(transition):
+            t.polyline = points
+
     for t in transitions:
         if (t.conflicts_with_transitions(transitions) \
                     or t.conflicts_with_boxes(coordinates)) \
@@ -23,19 +49,8 @@ def transitions_local_search(transitions, coordinates):
             transition = t.copy()
 
             if zone(t.source, t.target, coordinates) == 'west':
-
-                def finalization(points, transition):
-                    x1, y1, x2, y2 = coordinates[transition.target]
-                    mid = (x1 + x2) / 2
-                    a1, a2 = points[-1]
-                    b1, b2 = min([(mid, y1), (mid, y2)], key=lambda x: distance(points[-1], x))
-                    points.pop()
-                    points += [(b1, a2), (b1, b2)]
-                    transition.polyline = points
-                    if nb_conflicts(t) > nb_conflicts(transition):
-                        t.polyline = points
-
                 x1, y1, x2, y2 = coordinates[t.source]
+
                 if x1 < n[0]:
                     for points in [[n], [s], [w]]:
 
@@ -48,22 +63,16 @@ def transitions_local_search(transitions, coordinates):
                             for p in [n, s]:
                                 points = old_points[:] + [p]
                                 if points[-1] == n:
-                                    if len(points) == 1:
-                                        points = [((x1 + x2) / 2, y1)]
-                                    else:
-                                        points.pop()
+                                    points.pop()
                                     n1, n2 = n
                                     points += [(points[-1][0], n2)]
                                     points += [n]
                                 elif points[-1] == s:
-                                    if len(points) == 1:
-                                        points = [((x1 + x2) / 2, y2)]
-                                    else:
-                                        points.pop()
+                                    points.pop()
                                     s1, s2 = s
                                     points += [(points[-1][0], s2)]
                                     points += [s]
-                                finalization(points, transition)
+                                finalization_horizontal(points, transition)
 
                         elif points[-1] == n:
                             if len(points) == 1:
@@ -82,36 +91,24 @@ def transitions_local_search(transitions, coordinates):
                             s1, s2 = s
                             points += [(points[-1][0], s2)]
                             points += [s]
-                        finalization(points, transition)
+                        finalization_horizontal(points, transition)
                 else:
                     for points in [[n], [s]]:
-                        transition = t.copy()
                         if points[-1] == n:
-                            points = [(x1, (y1 + y2) / 2)]
+                            points = [((x1 + x2) / 2, y1)]
                             n1, n2 = n
-                            points += [(x1, n2)]
+                            points += [(n1, y1)]
                             points += [n]
                         elif points[-1] == s:
-                            points = [(x2, (y1 + y2) / 2)]
+                            points = [((x1 + x2) / 2, y2)]
                             s1, s2 = s
-                            points += [(x2, s2)]
+                            points += [(s1, y2)]
                             points += [s]
-                        finalization(points, transition)
+                        finalization_horizontal(points, transition)
 
             elif zone(transition.source, transition.target, coordinates) == 'east':
-
-                def finalization(points, transition):
-                    x1, y1, x2, y2 = coordinates[transition.target]
-                    mid = (x1 + x2) / 2
-                    a1, a2 = points[-1]
-                    b1, b2 = min([(mid, y1), (mid, y2)], key=lambda x: distance(points[-1], x))
-                    points.pop()
-                    points += [(b1, a2), (b1, b2)]
-                    transition.polyline = points
-                    if nb_conflicts(t) > nb_conflicts(transition):
-                        t.polyline = points
-
                 x1, y1, x2, y2 = coordinates[transition.source]
+
                 if x1 > n[0]:
                     for points in [[n], [s], [e]]:
                         if points[-1] == e:
@@ -123,22 +120,16 @@ def transitions_local_search(transitions, coordinates):
                             for p in [n, s]:
                                 points = old_points[:] + [p]
                                 if points[-1] == n:
-                                    if len(points) == 1:
-                                        points = [((x1 + x2) / 2, y1)]
-                                    else:
-                                        points.pop()
+                                    points.pop()
                                     n1, n2 = n
                                     points += [(points[-1][0], n2)]
                                     points += [n]
                                 elif points[-1] == s:
-                                    if len(points) == 1:
-                                        points = [((x1 + x2) / 2, y2)]
-                                    else:
-                                        points.pop()
+                                    points.pop()
                                     s1, s2 = s
                                     points += [(points[-1][0], s2)]
                                     points += [s]
-                                finalization(points, transition)
+                                finalization_horizontal(points, transition)
 
                         elif points[-1] == n:
                             if len(points) == 1:
@@ -156,7 +147,7 @@ def transitions_local_search(transitions, coordinates):
                             s1, s2 = s
                             points += [(points[-1][0], s2)]
                             points += [s]
-                        finalization(points, transition)
+                        finalization_horizontal(points, transition)
 
                 else:
                     for points in [[n], [s]]:
@@ -170,21 +161,10 @@ def transitions_local_search(transitions, coordinates):
                             s1, s2 = s
                             points += [((x1 + x2) / 2, s2)]
                             points += [s]
-                        finalization(points, transition)
+                        finalization_horizontal(points, transition)
 
             elif zone(transition.source, transition.target, coordinates) == 'north':
                 x1, y1, x2, y2 = coordinates[transition.source]
-
-                def finalization(points, transition):
-                    x1, y1, x2, y2 = coordinates[transition.target]
-                    mid = (y1 + y2) / 2
-                    a1, a2 = points[-1]
-                    b1, b2 = min([(x1, mid), (x2, mid)], key=lambda x: distance(points[-1], x))
-                    points.pop()
-                    points += [(a1, b2), (b1, b2)]
-                    transition.polyline = points
-                    if nb_conflicts(t) > nb_conflicts(transition):
-                        t.polyline = points
 
                 if y1 < w[1]:
                     for points in [[n], [w], [e]]:
@@ -197,22 +177,16 @@ def transitions_local_search(transitions, coordinates):
                             for p in [e, w]:
                                 points = old_points[:] + [p]
                                 if points[-1] == w:
-                                    if len(points) == 1:
-                                        points = [(x1, (y1 + y2) / 2)]
-                                    else:
-                                        points.pop()
+                                    points.pop()
                                     w1, w2 = w
                                     points += [(w1, points[-1][1])]
                                     points += [w]
                                 elif points[-1] == e:
-                                    if len(points) == 1:
-                                        points = [(x2, (y1 + y2) / 2)]
-                                    else:
-                                        points.pop()
+                                    points.pop()
                                     e1, e2 = e
                                     points += [(e1, points[-1][1])]
                                     points += [e]
-                                finalization(points, transition)
+                                finalization_vertical(points, transition)
 
                         elif points[-1] == w:
                             if len(points) == 1:
@@ -230,7 +204,7 @@ def transitions_local_search(transitions, coordinates):
                             e1, e2 = e
                             points += [(e1, points[-1][1])]
                             points += [e]
-                        finalization(points, transition)
+                        finalization_vertical(points, transition)
 
                 else:
                     for points in [[w], [e]]:
@@ -244,21 +218,10 @@ def transitions_local_search(transitions, coordinates):
                             e1, e2 = e
                             points += [(e1, (y1 + y2) / 2)]
                             points += [e]
-                        finalization(points, transition)
+                        finalization_vertical(points, transition)
 
             else:
                 x1, y1, x2, y2 = coordinates[transition.source]
-
-                def finalization(points, transition):
-                    x1, y1, x2, y2 = coordinates[transition.target]
-                    mid = (y1 + y2) / 2
-                    a1, a2 = points[-1]
-                    b1, b2 = min([(x1, mid), (x2, mid)], key=lambda x: distance(points[-1], x))
-                    points.pop()
-                    points += [(a1, b2), (b1, b2)]
-                    transition.polyline = points
-                    if nb_conflicts(t) > nb_conflicts(transition):
-                        t.polyline = points
 
                 if y1 > w[1]:
                     for points in [[s], [w], [e]]:
@@ -271,10 +234,7 @@ def transitions_local_search(transitions, coordinates):
                             for p in [e, w]:
                                 points = old_points[:] + [p]
                                 if points[-1] == w:
-                                    if len(points) == 1:
-                                        points = [(x1, (y1 + y2) / 2)]
-                                    else:
-                                        points.pop()
+                                    points.pop()
                                     w1, w2 = w
                                     points += [(w1, points[-1][1])]
                                     points += [w]
@@ -286,7 +246,7 @@ def transitions_local_search(transitions, coordinates):
                                     e1, e2 = e
                                     points += [(e1, points[-1][1])]
                                     points += [e]
-                                finalization(points, transition)
+                                finalization_vertical(points, transition)
 
                         elif points[-1] == w:
                             if len(points) == 1:
@@ -304,7 +264,7 @@ def transitions_local_search(transitions, coordinates):
                             e1, e2 = e
                             points += [(e1, points[-1][1])]
                             points += [e]
-                        finalization(points, transition)
+                        finalization_vertical(points, transition)
 
                 else:
                     for points in [[w], [e]]:
@@ -318,4 +278,4 @@ def transitions_local_search(transitions, coordinates):
                             e1, e2 = e
                             points += [(e1, (y1 + y2) / 2)]
                             points += [e]
-                        finalization(points, transition)
+                        finalization_vertical(points, transition)
