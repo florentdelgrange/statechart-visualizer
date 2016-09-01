@@ -38,7 +38,7 @@ class Box:
         :return: a tuple of int containing the dimension of the Box : (width, height)
         """
         # leaf box
-        if not self.children:
+        if not self._children:
             if self._parallel_states:
                 p_len = 14 * char_width
             else:
@@ -54,11 +54,11 @@ class Box:
             return max(p_len + len(self.name) * char_width, entry_len, exit_len) + 2 * space, self.header + 2 * space
         else:
             x1, y1, x2, y2 = self.coordinates[self]
-            if self.parallel_states:
+            if self._parallel_states:
                 if self.parent.axis == 'horizontal':
-                    y2 = max(map(lambda child: child.coordinates[child][3], self.parent.children))
+                    y2 = max(map(lambda child: child.coordinates[child][3], self.parent._children))
                 else:
-                    x2 = max(map(lambda child: child.coordinates[child][2], self.parent.children))
+                    x2 = max(map(lambda child: child.coordinates[child][2], self.parent._children))
             return x2, y2
 
     @property
@@ -73,7 +73,7 @@ class Box:
         x, y = insert
         w = x + self.width / 2
         h = y + space + char_height
-        if self.parallel_states:
+        if self._parallel_states:
             w -= (len(self.name) * char_width + 13 * char_width) / 2  # for the <<parallel>> zone left to the name
         else:
             w -= (len(self.name) * char_width) / 2
@@ -110,7 +110,7 @@ class Box:
         :return: the dictionary linking the boxes (in this box) with their coordinates
             format : {Box : (x1, y1, x2, y2)} where insert=(x1, y1) and end=(x2, y2)
         """
-        if not self.children:
+        if not self._children:
             return OrderedDict({self: (0, 0, self.width, self.height)})
         else:
             coordinates = OrderedDict()
@@ -120,7 +120,7 @@ class Box:
                 x1, y1, x2, y2 = coordinates[child]
                 dimensions[child] = (x2 - x1, y2 - y1)
 
-            new_coordinates = constraint_solver.resolve(self, dimensions, self.children, self._constraints)
+            new_coordinates = constraint_solver.resolve(self, dimensions, self._children, self._constraints)
 
             def update_coordinates(box1, box2):
                 x1, y1, x2, y2 = new_coordinates[box1]
@@ -149,25 +149,25 @@ class Box:
         """
 
         def smooth(box):
-            for i in range(len(box.children)):
-                child = box.children[i]
+            for i in range(len(box._children)):
+                child = box._children[i]
                 if isinstance(child, GroupBox) and child.axis == box.axis:
                     box.remove_child(child)
-                    for j in range(len(child.children)):
-                        new_child = child.children[j]
+                    for j in range(child._children):
+                        new_child = child._children[j]
                         box.add_child(new_child, i + j)
 
-        if self in box.parent.children and self != box \
+        if self in box.parent._children and self != box \
                 and direction in ['north of', 'south of', 'east of', 'west of']:
             parent = box.parent
-            i_self = parent.children.index(self)
-            i_box = parent.children.index(box)
+            i_self = parent._children.index(self)
+            i_box = parent._children.index(box)
             if direction == 'west of':
-                if len(parent.children) == 2:
+                if len(parent._children) == 2:
                     parent.axis = 'horizontal'
                 if parent.axis == 'horizontal' and i_self > i_box:
-                    parent._children = parent.children[:i_box] + [
-                        self] + parent.children[i_box:i_self] + parent.children[i_self + 1:]
+                    parent._children = parent._children[:i_box] + [
+                        self] + parent._children[i_box:i_self] + parent._children[i_self + 1:]
                 elif parent.axis == 'vertical':
                     parent.remove_child(self)
                     parent.remove_child(box)
@@ -176,11 +176,11 @@ class Box:
                     container.add_child(box)
                     parent.add_child(container, index=i_box)
             elif direction == 'east of':
-                if len(parent.children) == 2:
+                if len(parent._children) == 2:
                     parent.axis = 'horizontal'
                 if parent.axis == 'horizontal' and i_self < i_box:
-                    parent._children = parent.children[:i_self] + parent.children[i_self + 1:i_box] + [
-                        box, self] + parent.children[i_box + 1:]
+                    parent._children = parent._children[:i_self] + parent._children[i_self + 1:i_box] + [
+                        box, self] + parent._children[i_box + 1:]
                 elif parent.axis == 'vertical':
                     parent.remove_child(self)
                     parent.remove_child(box)
@@ -189,11 +189,11 @@ class Box:
                     container.add_child(self)
                     parent.add_child(container, index=i_box)
             elif direction == 'north of':
-                if len(parent.children) == 2:
+                if len(parent._children) == 2:
                     parent.axis = 'vertical'
                 if parent.axis == 'vertical' and i_self > i_box:
-                    parent._children = parent.children[:i_box] + [
-                        self] + parent.children[i_box:i_self] + parent.children[i_self + 1:]
+                    parent._children = parent._children[:i_box] + [
+                        self] + parent._children[i_box:i_self] + parent._children[i_self + 1:]
                 elif parent.axis == 'horizontal':
                     parent.remove_child(self)
                     parent.remove_child(box)
@@ -202,11 +202,11 @@ class Box:
                     container.add_child(box)
                     parent.add_child(container, index=i_box)
             else:
-                if len(parent.children) == 2:
+                if len(parent._children) == 2:
                     parent.axis = 'vertical'
                 if parent.axis == 'vertical' and i_self < i_box:
-                    parent._children = parent.children[:i_self] + parent.children[i_self + 1:i_box] + [
-                        box, self] + parent.children[i_box + 1:]
+                    parent._children = parent._children[:i_self] + parent._children[i_self + 1:i_box] + [
+                        box, self] + parent._children[i_box + 1:]
                 elif parent.axis == 'horizontal':
                     parent.remove_child(self)
                     parent.remove_child(box)
@@ -274,7 +274,7 @@ class Box:
 
     @property
     def children(self):
-        return self._children
+        return iter(self._children)
 
     def add_child(self, box, index=-1, constraint=None):
         """
@@ -316,7 +316,7 @@ class Box:
         """
         :return: the list of transitions such that the source of the transitions is self.
         """
-        return self._transitions
+        return iter(self._transitions)
 
     def add_transition(self, transition):
         """
@@ -349,7 +349,7 @@ class Box:
 
     @property
     def parallel_states(self):
-        return self._parallel_states
+        return iter(self._parallel_states)
 
     def add_parallel_state(self, parallel_state):
         if isinstance(parallel_state, Box):
@@ -363,7 +363,7 @@ class Box:
         :return: True if this state is an orthogonal state ie their
         children have parallel_states.
         """
-        return next((True for child in self.children if child.parallel_states), False)
+        return next((True for child in self.children if child._parallel_states), False)
 
     @property
     def header(self):
@@ -428,7 +428,7 @@ class Box:
         Note that the constraints will have no influence on this function.
         :return: 'north' | 'east' | 'south' | 'west'
         """
-        if self.parent.children.index(self) <= len(self.parent.children) / 2 - 1:
+        if self.parent._children.index(self) <= len(self.parent._children) / 2 - 1:
             if self.parent.axis == 'horizontal':
                 return 'west'
             else:

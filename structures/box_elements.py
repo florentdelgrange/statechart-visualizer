@@ -20,7 +20,7 @@ class InitBox(Box):
         return radius * 2, radius * 2
 
     def __repr__(self):
-        return "InitBox(to=" + self.transitions[0].target.name + ")"
+        return "InitBox(to=" + next(self.transitions).target.name + ")"
 
 
 class RootBox(Box):
@@ -97,7 +97,7 @@ class RootBox(Box):
             for child in box.children:
                 for transition in child.transitions:
                     transition.reset_coordinates()
-                t += find_transitions(child, child.transitions)
+                t += find_transitions(child, list(child.transitions))
             return transitions + t
 
         transitions = find_transitions(self)

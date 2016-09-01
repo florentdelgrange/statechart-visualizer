@@ -2,7 +2,6 @@ from sismic import io
 import sismic
 import unittest
 
-import svgwriter
 from structures.segment import Segment, intersect, combined_segments, get_box_segments
 from constraint_solver import Constraint
 from structures.box import Box
@@ -132,7 +131,6 @@ class TestConstraints(unittest.TestCase):
         root_box.transitions
         coordinates1 = root_box.coordinates
         set1 = root_box.constraints.copy()
-        svgwriter.export(root_box, file_name='test_box1')
 
         root_box.add_constraint(
             Constraint(root_box.get_box_by_name('doorsClosed'), 'north', root_box.get_box_by_name('doorsOpen')))
@@ -145,7 +143,6 @@ class TestConstraints(unittest.TestCase):
         root_box.transitions
         coordinates2 = root_box.coordinates
         set2 = root_box.constraints.copy()
-        svgwriter.export(root_box, file_name='test_box2')
 
         self.assertEqual(set1, set2)
         for key in coordinates1.keys():

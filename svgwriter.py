@@ -45,7 +45,7 @@ def render_box(box: Box, coordinates):
 
     # Now draw the name of the box
     w, h = box.name_position(insert)
-    if box.parallel_states:
+    if next(box.parallel_states, False):
         t1 = svgwrite.text.Text("<<parallel>>", insert=(w, h), style=italic_style, textLength=13 * char_width)
         t2 = svgwrite.text.Text(box.name, insert=(w + 14 * char_width, h), style=bold_style,
                                 textLength=len(box.name) * char_width)
