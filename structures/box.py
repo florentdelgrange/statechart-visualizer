@@ -257,9 +257,6 @@ class Box:
             box2 = ancestors_box2[ancestors_box2.index(closest_ancestor) - 1]
             closest_ancestor.add_constraint(Constraint(box1, constraint.direction, box2))
 
-    def add_text_zone_constraint(self, text_coordinates):
-        self._text_zone_constraints.update(text_coordinates)
-
     @property
     def name(self):
         return self._name
