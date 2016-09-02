@@ -44,7 +44,7 @@
 <h2>
 <a id="introduction" class="anchor" href="#introduction" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Introduction</h2>
 
-<p>This module is initially planned to display statecharts from sismic but you can
+<p>This module for pyhton 3 is initially planned to display statecharts from sismic but you can
 easily use it to create directly your own statecharts and display them. The purpose of the
 project is display statecharts properly and add constraints (like <em>state 1 must be left to state2</em>)
 on the states.</p>
@@ -54,13 +54,12 @@ on the states.</p>
 <h2>
 <a id="requirements" class="anchor" href="#requirements" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Requirements</h2>
 
-<p>You will find here the list of modules needed to use it :</p>
+<p>You will find here the list of modules needed to use it (for python 3):</p>
 
 <ul>
 <li><a href="https://github.com/AlexandreDecan/sismic">Sismic</a></li>
 <li><a href="https://github.com/pybee/cassowary">Cassowary</a></li>
 <li><a href="https://github.com/biazzotto/svgwrite">svgwrite</a></li>
-<li>python 3</li>
 </ul>
 
 <h2>
@@ -94,7 +93,7 @@ svgwriter.export(box)
 
 <p>Using the constraint solver (using the cassowary alogorithm), the boxes representing the states will be arranged
 following the text on the transtitions and alternatively following a horizontal axis and a vertical axis.
-After that, the transitions will be drawn minimizing intersections with boxes, transitions and other text.</p>
+After that, the transitions will be drawn minimizing intersections with boxes, text and other transitions.</p>
 
 <p>If the arrangement doesn't suit you, you can add mannualy constraint on the boxes with the method <code>box.add_constraint</code>.
 If you don't want to display the entire text on transitions, you can hide a part of it, for example the action with 
