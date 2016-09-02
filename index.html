@@ -60,6 +60,7 @@ on the states.</p>
 <li><a href="https://github.com/AlexandreDecan/sismic">Sismic</a></li>
 <li><a href="https://github.com/pybee/cassowary">Cassowary</a></li>
 <li><a href="https://github.com/biazzotto/svgwrite">svgwrite</a></li>
+<li>python 3</li>
 </ul>
 
 <h2>
@@ -68,7 +69,7 @@ on the states.</p>
 <p>You can test the module interactively from a simple yaml file (representing
 a statechart) following this way :</p>
 
-<pre><code>main.py &lt;your-file.yaml&gt;
+<pre><code>python main.py &lt;your-file.yaml&gt;
 </code></pre>
 
 <p>Each action will create (or update) a svg file with the name of the statechart.
@@ -93,7 +94,9 @@ svgwriter.export(box)
 
 <p>Using the constraint solver (using the cassowary alogorithm), the boxes representing the states will be arranged
 following the text on the transtitions and alternatively following a horizontal axis and a vertical axis.
-If the arrangement doesn't suit you, you can add mannualy constraint on the boxes with the method <code>box.add_constraint</code>.
+After that, the transitions will be drawn minimizing intersections with boxes, transitions and other text.</p>
+
+<p>If the arrangement doesn't suit you, you can add mannualy constraint on the boxes with the method <code>box.add_constraint</code>.
 If you don't want to display the entire text on transitions, you can hide a part of it, for example the action with 
 <code>box._hide_action_on_transitions</code>.</p>
 
