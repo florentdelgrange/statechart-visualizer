@@ -2,7 +2,7 @@
 Display statecharts properly from a yaml or a statechart object from Sismic.
 
 ## Introduction
-This module is initially planned to display statecharts from sismic but you can
+This module for pyhton 3 is initially planned to display statecharts from sismic but you can
 easily use it to create directly your own statecharts and display them. The purpose of the
 project is display statecharts properly and add constraints (like *state 1 must be left to state2*)
 on the states.
@@ -10,12 +10,11 @@ on the states.
 You can then export your statechart as svg file.
 
 ## Requirements
-You will find here the list of modules needed to use it :
+You will find here the list of modules needed to use it (for python 3):
 
 - [Sismic](https://github.com/AlexandreDecan/sismic)
 - [Cassowary](https://github.com/pybee/cassowary)
 - [svgwrite](https://github.com/biazzotto/svgwrite)
-- python 3
 
 ## Interactive mode
 You can test the module interactively from a simple yaml file (representing
@@ -43,7 +42,7 @@ svgwriter.export(box)
 ```
 Using the constraint solver (using the cassowary alogorithm), the boxes representing the states will be arranged
 following the text on the transtitions and alternatively following a horizontal axis and a vertical axis.
-After that, the transitions will be drawn minimizing intersections with boxes, transitions and other text.
+After that, the transitions will be drawn minimizing intersections with boxes, text and other transitions.
 
 If the arrangement doesn't suit you, you can add mannualy constraint on the boxes with the method `box.add_constraint`.
 If you don't want to display the entire text on transitions, you can hide a part of it, for example the action with 
