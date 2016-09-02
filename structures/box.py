@@ -309,36 +309,54 @@ class Box:
             return False
 
     def hide_guard_on_transitions(self):
+        """
+        Hide the guard on every transitions related to this box and in this box.
+        """
         for transition in self.transitions:
             transition.hide_guard()
         for child in self.children:
             child.hide_guard_on_transitions()
 
     def hide_action_on_transitions(self):
+        """
+        Hide the action text on every transition related to this box and in this box.
+        """
         for transition in self.transitions:
             transition.hide_action()
         for child in self.children:
             child.hide_action_on_transitions()
 
     def hide_event_on_transitions(self):
+        """
+        Hide the event text on every transition related to this box and in this box.
+        """
         for transition in self.transitions:
             transition.hide_event()
         for child in self.children:
             child.hide_event_on_transitions()
 
     def show_guard_on_transitions(self):
+        """
+        Show the guard text previously hidden on every transition related to this box and in this box.
+        """
         for transition in self.transitions:
             transition.show_guard()
         for child in self.children:
             child.show_guard_on_transitions()
 
     def show_action_on_transitions(self):
+        """
+        Show the action text previously hidden on every transition related to this box and in this box.
+        """
         for transition in self.transitions:
             transition.show_action()
         for child in self.children:
             child.show_action_on_transitions()
 
     def show_event_on_transitions(self):
+        """
+        Show the event text previously hidden on every transition related to this box and in this box.
+        """
         for transition in self.transitions:
             transition.show_event()
         for child in self.children:
