@@ -15,12 +15,13 @@ You will find here the list of modules needed to use it :
 - [Sismic](https://github.com/AlexandreDecan/sismic)
 - [Cassowary](https://github.com/pybee/cassowary)
 - [svgwrite](https://github.com/biazzotto/svgwrite)
+- python 3
 
 ## Interactive mode
 You can test the module interactively from a simple yaml file (representing
 a statechart) following this way :
 ```
-main.py <your-file.yaml>
+python main.py <your-file.yaml>
 ```
 
 Each action will create (or update) a svg file with the name of the statechart.
@@ -42,6 +43,8 @@ svgwriter.export(box)
 ```
 Using the constraint solver (using the cassowary alogorithm), the boxes representing the states will be arranged
 following the text on the transtitions and alternatively following a horizontal axis and a vertical axis.
+After that, the transitions will be drawn minimizing intersections with boxes, transitions and other text.
+
 If the arrangement doesn't suit you, you can add mannualy constraint on the boxes with the method `box.add_constraint`.
 If you don't want to display the entire text on transitions, you can hide a part of it, for example the action with 
 `box._hide_action_on_transitions`.
