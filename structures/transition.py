@@ -10,9 +10,10 @@ class Transition:
         self.source = source
         self.target = target
         if_not_none = lambda x: {None: ''}.get(x, x)
-        self.guard = if_not_none(guard)
-        self.event = if_not_none(event)
-        self.action = if_not_none(action)
+        self._guard = if_not_none(guard)
+        self._event = if_not_none(event)
+        self._action = if_not_none(action)
+        self._show_guard, self._show_action, self._show_event = True, True, True
         self._x1, self._x2, self._y1, self._y2 = math.inf, math.inf, math.inf, math.inf
         self.polyline = []
 
@@ -21,6 +22,36 @@ class Transition:
         copy.polyline = self.polyline[:]
         copy._x1, copy._y1, copy._x2, copy._y2 = self._x1, self._x2, self._y1, self._y2
         return copy
+
+    @property
+    def guard(self):
+        return {True: self._guard, False: ''}[self._show_guard]
+
+    @property
+    def action(self):
+        return {True: self._action, False: ''}[self._show_action]
+
+    @property
+    def event(self):
+        return {True: self._event, False: ''}[self._show_event]
+
+    def hide_guard(self):
+        self._show_guard = False
+
+    def hide_action(self):
+        self._show_action = False
+
+    def hide_event(self):
+        self._show_event = False
+
+    def show_guard(self):
+        self._show_guard = True
+
+    def show_action(self):
+        self._show_action = True
+
+    def show_event(self):
+        self._show_event = True
 
     @property
     def coordinates(self):
@@ -131,8 +162,8 @@ class TextZone:
 
     def __init__(self, guard: str, action: str, event: str):
         self._guard = {'': ''}.get(guard, '[' + guard + ']')
-        self._action = {'': ''}.get(action, ' / ' + action)
         self._event = event
+        self._action = {event + guard: '', action: ' ' + action}.get(event + guard + action, ' / ' + action)
         self._elements = [self._event + self._guard + self._action]
 
     def split(self):
@@ -274,18 +305,17 @@ def get_text_and_zone(coordinates, transitions):
         possibilities = []
         text = TextZone(transition.guard, transition.action, transition.event)
 
-        if transition.guard != '' or transition.event != '':
-            if transition.target != transition.source:
-                for segment in transition.segments:
-                    possibilities += text.coordinates_possibilities(segment)
-            else:
-                possibilities += text.coordinates_possibilities(
-                    max(filter(lambda segment: segment.is_vertical, transition.segments),
-                        key=lambda segment: segment.length)
-                )
+        if transition.target != transition.source:
+            for segment in transition.segments:
+                possibilities += text.coordinates_possibilities(segment)
+        else:
+            possibilities += text.coordinates_possibilities(
+                max(filter(lambda segment: segment.is_vertical, transition.segments),
+                    key=lambda segment: segment.length)
+            )
 
-            texts += [min(possibilities,
-                          key=lambda dict: count_text_intersections(dict, texts, coordinates, transitions))]
+        texts += [min(possibilities,
+                      key=lambda dict: count_text_intersections(dict, texts, coordinates, transitions))]
 
     return texts
 

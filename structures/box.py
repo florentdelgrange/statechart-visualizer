@@ -308,6 +308,42 @@ class Box:
         else:
             return False
 
+    def hide_guard_on_transitions(self):
+        for transition in self.transitions:
+            transition.hide_guard()
+        for child in self.children:
+            child.hide_guard_on_transitions()
+
+    def hide_action_on_transitions(self):
+        for transition in self.transitions:
+            transition.hide_action()
+        for child in self.children:
+            child.hide_action_on_transitions()
+
+    def hide_event_on_transitions(self):
+        for transition in self.transitions:
+            transition.hide_event()
+        for child in self.children:
+            child.hide_event_on_transitions()
+
+    def show_guard_on_transitions(self):
+        for transition in self.transitions:
+            transition.show_guard()
+        for child in self.children:
+            child.show_guard_on_transitions()
+
+    def show_action_on_transitions(self):
+        for transition in self.transitions:
+            transition.show_action()
+        for child in self.children:
+            child.show_action_on_transitions()
+
+    def show_event_on_transitions(self):
+        for transition in self.transitions:
+            transition.show_event()
+        for child in self.children:
+            child.show_event_on_transitions()
+
     @property
     def transitions(self):
         """
