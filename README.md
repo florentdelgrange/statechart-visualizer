@@ -45,3 +45,41 @@ following the text on the transtitions and alternatively following a horizontal 
 If the arrangement doesn't suit you, you can add mannualy constraint on the boxes with the method `box.add_constraint`.
 If you don't want to display the entire text on transitions, you can hide a part of it, for example the action with 
 `box._hide_action_on_transitions`.
+
+## Example
+
+Suppose we want to display the statechart in tests/elevator.yaml.
+First, we do :
+```
+import svgwriter
+from sismic import io, model
+from structures.box_elements import RootBox
+
+with open('tests/elevator.yaml', 'r') as stream:
+        statechart = io.import_from_yaml(stream)
+        assert isinstance(statechart, model.Statechart)
+
+box = RootBox(statechart=statechart)
+svgwriter.export(box, file_name='examples/Elevator')
+```
+
+![alt text](https://github.com/radioGiorgio/statechart-visualizer/blob/master/examples/Elevator_simple.svg)
+
+But we want to have another arrangement of the boxes.
+Suppose that we want that :
+- movingDown at north of doorsClosed
+- doorsClosed at north-east of doorsOpen
+- floorListener at south of movingElevator
+and we don't want to display the actions.
+
+```
+get = lambda x: box.get_box_by_name(x)
+box.add_constraint(Constraint(get('moving'), 'north', get('doorsClosed')))
+box.add_constraint(Constraint(get('doorsClosed'), 'north', get('doorsOpen')))
+box.add_constraint(Constraint(get('doorsClosed'), 'east', get('doorsOpen')))
+box.add_constraint(Constraint(get('floorListener'), 'south', get('movingElevator')))
+box.hide_action_on_transitions()
+svgwriter.export(box, file_name='examples/Elevator')
+```
+
+![alt text](https://github.com/radioGiorgio/statechart-visualizer/blob/master/examples/Elevator.svg)
