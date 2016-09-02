@@ -48,7 +48,7 @@ If you don't want to display the entire text on transitions, you can hide a part
 
 ## Example
 
-Suppose we want to display the statechart in tests/elevator.yaml.
+Suppose we want to display the statechart in [tests/elevator.yaml](https://github.com/radioGiorgio/statechart-visualizer/blob/master/tests/elevator.yaml).
 First, we do :
 ```
 import svgwriter
