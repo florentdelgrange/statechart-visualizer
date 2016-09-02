@@ -1,25 +1,42 @@
-<!DOCTYPE html>
-<html lang="en-us">
-  <head>
-    <meta charset="UTF-8">
-    <title>Statechart-visualizer by radioGiorgio</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
-    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
-    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
-    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
-  </head>
-  <body>
-    <section class="page-header">
-      <h1 class="project-name">Statechart-visualizer</h1>
-      <h2 class="project-tagline">Display statecharts properly from a yaml or a statechart object from sismic</h2>
-      <a href="https://github.com/radioGiorgio/statechart-visualizer" class="btn">View on GitHub</a>
-      <a href="https://github.com/radioGiorgio/statechart-visualizer/zipball/master" class="btn">Download .zip</a>
-      <a href="https://github.com/radioGiorgio/statechart-visualizer/tarball/master" class="btn">Download .tar.gz</a>
-    </section>
+<!doctype html>
+<!-- The Time Machine GitHub pages theme was designed and developed by Jon Rohan, on Feb 7, 2012. -->
+<!-- Follow him for fun. http://twitter.com/jonrohan. Tail his code on https://github.com/jonrohan -->
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
 
-    <section class="main-content">
-      <h1>
+  <link rel="stylesheet" href="stylesheets/stylesheet.css" media="screen">
+  <link rel="stylesheet" href="stylesheets/github-dark.css">
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+  <script type="text/javascript" src="javascripts/script.js"></script>
+
+  <title>Statechart-visualizer</title>
+  <meta name="description" content="Display statecharts properly from a yaml or a statechart object from sismic">
+
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+
+</head>
+
+<body>
+
+  <div class="wrapper">
+    <header>
+      <h1 class="title">Statechart-visualizer</h1>
+    </header>
+    <div id="container">
+      <p class="tagline">Display statecharts properly from a yaml or a statechart object from sismic</p>
+      <div id="main" role="main">
+        <div class="download-bar">
+        <div class="inner">
+          <a href="https://github.com/radioGiorgio/statechart-visualizer/tarball/master" class="download-button tar"><span>Download</span></a>
+          <a href="https://github.com/radioGiorgio/statechart-visualizer/zipball/master" class="download-button zip"><span>Download</span></a>
+          <a href="https://github.com/radioGiorgio/statechart-visualizer" class="code">View Statechart-visualizer on GitHub</a>
+        </div>
+        <span class="blc"></span><span class="trc"></span>
+        </div>
+        <article class="markdown-body">
+          <h1>
 <a id="statechart-visualizer" class="anchor" href="#statechart-visualizer" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Statechart Visualizer</h1>
 
 <p>Display statecharts properly from a yaml or a statechart object from Sismic.</p>
@@ -101,14 +118,15 @@ svgwriter.export(box, file_name='examples/Elevator')
 <p><img src="https://cdn.rawgit.com/radioGiorgio/statechart-visualizer/master/examples/Elevator_simple.svg" alt="alt text"></p>
 
 <p>But we want to have another arrangement of the boxes.
-Suppose that we want that :</p>
+Suppose that we want :</p>
 
 <ul>
 <li>movingDown at north of doorsClosed</li>
 <li>doorsClosed at north-east of doorsOpen</li>
-<li>floorListener at south of movingElevator
-and we don't want to display the actions.</li>
+<li>floorListener at south of movingElevator</li>
 </ul>
+
+<p>and we don't want to display the actions.</p>
 
 <pre><code>get = lambda x: box.get_box_by_name(x)
 box.add_constraint(Constraint(get('moving'), 'north', get('doorsClosed')))
@@ -120,15 +138,26 @@ svgwriter.export(box, file_name='examples/Elevator')
 </code></pre>
 
 <p><img src="https://cdn.rawgit.com/radioGiorgio/statechart-visualizer/master/examples/Elevator.svg" alt="alt text"></p>
+        </article>
+      </div>
+    </div>
+    <footer>
+      <div class="owner">
+      <p><a href="https://github.com/radioGiorgio" class="avatar"><img src="https://avatars2.githubusercontent.com/u/9151959?v=3&amp;s=60" width="48" height="48"></a> <a href="https://github.com/radioGiorgio">radioGiorgio</a> maintains <a href="https://github.com/radioGiorgio/statechart-visualizer">Statechart-visualizer</a></p>
 
-      <footer class="site-footer">
-        <span class="site-footer-owner"><a href="https://github.com/radioGiorgio/statechart-visualizer">Statechart-visualizer</a> is maintained by <a href="https://github.com/radioGiorgio">radioGiorgio</a>.</span>
 
-        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
-      </footer>
-
-    </section>
+      </div>
+      <div class="creds">
+        <small>This page generated using <a href="https://pages.github.com/">GitHub Pages</a><br>theme by <a href="https://twitter.com/jonrohan/">Jon Rohan</a></small>
+      </div>
+    </footer>
+  </div>
+  <div class="current-section">
+    <a href="#top">Scroll to top</a>
+    <a href="https://github.com/radioGiorgio/statechart-visualizer/tarball/master" class="tar">tar</a><a href="https://github.com/radioGiorgio/statechart-visualizer/zipball/master" class="zip">zip</a><a href="" class="code">source code</a>
+    <p class="name"></p>
+  </div>
 
   
-  </body>
+</body>
 </html>
