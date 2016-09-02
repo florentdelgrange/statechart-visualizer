@@ -63,7 +63,7 @@ box = RootBox(statechart=statechart)
 svgwriter.export(box, file_name='examples/Elevator')
 ```
 
-![alt text](http://radioGiorgio.github.io/statechart-visualizer/blob/master/examples/Elevator_simple.svg)
+![alt text](https://raw.githubusercontent.com/radioGiorgio/statechart-visualizer/master/examples/Elevator.svg)
 
 But we want to have another arrangement of the boxes.
 Suppose that we want that :
