@@ -2,7 +2,7 @@
 Display statecharts properly from a yaml or a statechart object from Sismic.
 
 ## Introduction
-This module is initially planned to display the statecharts from sismic but you can
+This module is initially planned to display statecharts from sismic but you can
 easily use it to create directly your own statecharts and display them. The purpose of the
 project is display statecharts properly and add constraints (like *state 1 must be left to state2*)
 on the states.
@@ -66,10 +66,11 @@ svgwriter.export(box, file_name='examples/Elevator')
 ![alt text](https://cdn.rawgit.com/radioGiorgio/statechart-visualizer/master/examples/Elevator_simple.svg)
 
 But we want to have another arrangement of the boxes.
-Suppose that we want that :
+Suppose that we want :
 - movingDown at north of doorsClosed
 - doorsClosed at north-east of doorsOpen
 - floorListener at south of movingElevator
+
 and we don't want to display the actions.
 
 ```
