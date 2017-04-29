@@ -86,3 +86,6 @@ svgwriter.export(box, file_name='examples/Elevator')
 ```
 
 ![alt text](https://cdn.rawgit.com/radioGiorgio/statechart-visualizer/master/examples/Elevator.svg)
+
+## Known issues
+- Risk of text overlapping when more than 2 transitions have the same incident state and the same state of arrival
