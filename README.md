@@ -2,7 +2,7 @@
 Display pretty statecharts following a description of the system under the form of a yaml file or a Sismic object.
 
 ## Introduction
-This module for pyhton 3 is initially planned to display statecharts from Sismic, but you can
+This module for python 3 is initially planned to display statecharts from Sismic, but you can
 easily use it to create directly your own statecharts and display them. The purpose of the
 project is to display readable and understandable statecharts, and add visual constraints of some states (e.g., *state 1 must be left to state2*).
 
