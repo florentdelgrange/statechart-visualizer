@@ -4,7 +4,6 @@ import svgwriter
 from sismic import io, model
 from structures.box_elements import RootBox
 from constraint_solver import Constraint
-from structures.transition import get_text_and_zone
 import readline
 import rlcompleter
 import atexit
@@ -104,9 +103,9 @@ while True:
             print("Example : hide event")
             print()
             print("4. show transition_text")
-            print("    - transition_text: the part of the transition text to hide")
+            print("    - transition_text: the part of the transition text to display")
             print("      values : {'guard', 'event', 'action'}")
-            print("The part of the previously hidden transition text in parameter will be showed")
+            print("The part of the previously hidden transition text in parameter will be displayed")
             print("Example : show event")
             print()
             print("5. quit | exit")
