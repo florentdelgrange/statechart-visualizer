@@ -106,9 +106,10 @@ class TestConstraints(unittest.TestCase):
                          set(self.root_box.zone(self.states['program mode'], self.states['cooking mode'])))
 
     def test_random_constraints2(self):
+        print(self.states)
         self.root_box.add_constraint(
-            Constraint(self.states['closed without item'], 'south', self.states['program mode']))
-        self.assertIn('south', self.root_box.zone(self.states['closed without item'], self.states['closed with item']))
+            Constraint(self.states['door closed without item'], 'south', self.states['program mode']))
+        self.assertIn('south', self.root_box.zone(self.states['door closed without item'], self.states['door closed with item']))
 
     def test_random_constraints3(self):
         self.root_box.add_constraint(Constraint(self.states['door opened'], 'south', self.states['door closed']))
