@@ -137,7 +137,7 @@ class Box:
     def move_to(self, direction, box):
         """
         Move the Box (self) following the direction of this box with the box in parameter.
-        example : box1.move_to('south of', box2) will move the box1 to south of box2.
+        example : box1.move_to('south of', box2) will move the box1 south to box2.
         Note that just the children's list of the Box will be modified ie the Box will be moved
         without constraint on it. A constraint has more weight that the move action ; if you add
         a constraint and you try to move a box in an opposite direction of this constraint to the same box,
@@ -286,7 +286,7 @@ class Box:
         """
         if isinstance(box, Box):
             if index >= 0:
-                self._children = self.children[:index] + [box] + self.children[index:]
+                self._children = self._children[:index] + [box] + self._children[index:]
             else:
                 self._children.append(box)
             box._parent = self
@@ -302,7 +302,7 @@ class Box:
         :return: True if the child is correctly removed from the children list
         """
         if box in self.children:
-            self.children.remove(box)
+            self._children.remove(box)
             box._parent = None
             return True
         else:
