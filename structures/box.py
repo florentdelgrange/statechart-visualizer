@@ -4,7 +4,7 @@ import math
 from typing import Dict, Tuple
 from collections import OrderedDict
 
-char_width, char_height, space, radius = 10, 20, 20, 20
+char_width, char_height, space, radius = 12, 20, 20, 20
 
 
 class Box:
