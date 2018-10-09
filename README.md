@@ -34,7 +34,7 @@ Assuming you have created a statechart object with Sismic, you can create a svg 
 1. Create a RootBox with this statechart.
 2. Export this RootBox to a svg file.
 
-```
+```python
 from structures.box_elements import RootBox
 box = RootBox(statechart)
 svgwriter.export(box)
@@ -50,7 +50,7 @@ If you don't want to display the entire text on transitions, you can hide a part
 ## Example
 
 Assuming we want to display the statechart in [tests/elevator.yaml](https://github.com/radioGiorgio/statechart-visualizer/blob/master/tests/elevator.yaml), we do:
-```
+```python
 import svgwriter
 from sismic import io, model
 from structures.box_elements import RootBox
@@ -73,7 +73,7 @@ Let us assume that we want:
 
 and we don't want to display the actions.
 
-```
+```python
 get = lambda x: box.get_box_by_name(x)
 box.add_constraint(Constraint(get('moving'), 'north', get('doorsClosed')))
 box.add_constraint(Constraint(get('doorsClosed'), 'north', get('doorsOpen')))
